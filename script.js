@@ -1077,9 +1077,13 @@ function updateQuestionStatus() {
             questionItem.classList.add('active');
         }
         
-        // 如果用戶已回答，添加answered類
+        // 如果用戶已回答，只標記已回答（不顯示正確/錯誤）
         if (userAnswers[index] !== null) {
-            // 檢查答案是否正確
+            questionItem.classList.add('answered');
+        }
+        
+        // 只有在測驗完成後才顯示正確/錯誤
+        if (isExamFinished) {
             if (userAnswers[index] === question.correctAnswer) {
                 questionItem.classList.add('answered');
             } else {
@@ -1118,17 +1122,21 @@ function updateProgressAndScore() {
     // 計算已回答的題數
     const answeredCount = userAnswers.filter(answer => answer !== null).length;
     
-    // 計算得分
-    score = 0;
-    questions.forEach((question, index) => {
-        if (userAnswers[index] === question.correctAnswer) {
-            score++;
-        }
-    });
-    
     // 更新顯示
     progressElement.textContent = `${answeredCount}/${questions.length}`;
-    scoreElement.textContent = score;
+    
+    // 只有在測驗完成後才計算分數
+    if (isExamFinished) {
+        score = 0;
+        questions.forEach((question, index) => {
+            if (userAnswers[index] === question.correctAnswer) {
+                score++;
+            }
+        });
+        scoreElement.textContent = score;
+    } else {
+        scoreElement.textContent = '--';
+    }
     
     // 檢查是否所有題目都已回答
     const allAnswered = userAnswers.every(answer => answer !== null);
@@ -1147,13 +1155,11 @@ function updateProgressAndScore() {
 // 提交答案
 function submitAnswer() {
     if (isExamFinished) {
-        alert('測驗已完成，請重新載入頁面開始新的測驗');
         return;
     }
     
     const allAnswered = userAnswers.every(answer => answer !== null);
     if (!allAnswered) {
-        alert('請先完成所有題目！');
         return;
     }
     
@@ -1165,40 +1171,100 @@ function submitAnswer() {
         option.style.pointerEvents = 'none';
     });
     
-    // 顯示所有題目的正確答案
+    // 計算分數
+    score = 0;
+    let wrongAnswers = [];
+    
     questions.forEach((question, index) => {
-        const questionItems = document.querySelectorAll('.question-item');
-        const questionItem = questionItems[index];
-        
-        // 標記題目狀態
         if (userAnswers[index] === question.correctAnswer) {
-            questionItem.classList.add('answered');
+            score++;
         } else {
-            questionItem.classList.add('incorrect');
-        }
-        
-        // 如果當前顯示的是錯誤的題目，顯示正確答案
-        if (currentQuestionIndex === index && userAnswers[index] !== question.correctAnswer) {
-            const options = document.querySelectorAll('.option');
-            options.forEach((option, optIndex) => {
-                if (optIndex === question.correctAnswer) {
-                    option.classList.add('correct');
-                } else if (optIndex === userAnswers[index]) {
-                    option.classList.add('incorrect');
-                }
+            wrongAnswers.push({
+                id: question.id,
+                question: question.text,
+                userAnswer: question.options[userAnswers[index]],
+                correctAnswer: question.options[question.correctAnswer],
+                explanation: question.explanation
             });
-            
-            feedbackElement.textContent = `正確答案是：${question.options[question.correctAnswer]}。${question.explanation}`;
-            feedbackElement.className = 'feedback incorrect';
-            feedbackElement.style.display = 'block';
         }
     });
+    
+    // 更新題目列表狀態（顯示正確/錯誤）
+    updateQuestionStatus();
+    
+    // 顯示結果面板
+    showResultPanel(score, wrongAnswers);
     
     // 更新提交按鈕狀態
     updateProgressAndScore();
     
-    // 顯示總分
-    alert(`測驗完成！您的總分是：${score}/${questions.length}`);
+    // 如果當前題目答錯，顯示正確答案
+    const currentQuestion = questions[currentQuestionIndex];
+    if (userAnswers[currentQuestionIndex] !== currentQuestion.correctAnswer) {
+        const options = document.querySelectorAll('.option');
+        options.forEach((option, optIndex) => {
+            if (optIndex === currentQuestion.correctAnswer) {
+                option.classList.add('correct');
+            } else if (optIndex === userAnswers[currentQuestionIndex]) {
+                option.classList.add('incorrect');
+            }
+        });
+        
+        feedbackElement.textContent = `正確答案是：${currentQuestion.options[currentQuestion.correctAnswer]}。${currentQuestion.explanation}`;
+        feedbackElement.className = 'feedback incorrect';
+        feedbackElement.style.display = 'block';
+    }
+}
+
+// 新增顯示結果面板函數
+function showResultPanel(score, wrongAnswers) {
+    const resultPanel = document.getElementById('result-panel');
+    const resultContent = document.getElementById('result-content');
+    
+    let resultHTML = `
+        <div style="text-align: center; margin-bottom: 15px;">
+            <h4 style="color: ${score >= questions.length * 0.6 ? '#27ae60' : '#e74c3c'}">
+                測驗完成！您的總分是：${score}/${questions.length}
+            </h4>
+        </div>
+    `;
+    
+    if (wrongAnswers.length > 0) {
+        resultHTML += `
+            <div style="margin-bottom: 10px;">
+                <strong>錯誤題目詳解：</strong>
+            </div>
+        `;
+        
+        wrongAnswers.forEach((item, index) => {
+            resultHTML += `
+                <div style="margin-bottom: 15px; padding: 10px; background: #fff; border-radius: 4px; border-left: 4px solid #e74c3c;">
+                    <div><strong>題目 ${item.id}:</strong> ${item.question}</div>
+                    <div style="margin-top: 5px;">
+                        <span class="incorrect-answer">您的答案: ${item.userAnswer}</span>
+                    </div>
+                    <div>
+                        <span class="correct-answer">正確答案: ${item.correctAnswer}</span>
+                    </div>
+                    <div style="margin-top: 5px; font-size: 0.9em; color: #666;">
+                        ${item.explanation}
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        resultHTML += `
+            <div style="text-align: center; color: #27ae60; font-weight: bold;">
+                恭喜！所有題目都答對了！
+            </div>
+        `;
+    }
+    
+    resultContent.innerHTML = resultHTML;
+    resultPanel.style.display = 'block';
+    
+    // 滾動到結果面板
+    resultPanel.scrollIntoView({ behavior: 'smooth' });
 }
 
 // 事件監聽器

@@ -251,6 +251,35 @@ button {
     background: #bdc3c7;
 }
 
+/* 添加結果面板樣式 */
+.result-panel {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.result-panel h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+#result-content {
+    line-height: 1.6;
+}
+
+.correct-answer {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.incorrect-answer {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
 @media (max-width: 768px) {
     .main-content {
         flex-direction: column;
