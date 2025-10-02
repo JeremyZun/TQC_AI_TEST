@@ -1,0 +1,796 @@
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>TQC 人工智慧應用與技術 測驗</title>
+  <style>
+    body { font-family: "Microsoft JhengHei", sans-serif; background: #f5f5f5; margin: 0; padding: 20px; }
+    .quiz-container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #333; }
+    .question { margin-bottom: 20px; }
+    .options label { display: block; background: #f0f0f0; padding: 10px; margin: 5px 0; border-radius: 8px; cursor: pointer; transition: background 0.3s; }
+    .options label:hover { background: #ddd; }
+    button { display: block; width: 100%; padding: 12px; margin-top: 20px; font-size: 16px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; }
+    button:hover { background: #45a049; }
+    #result { margin-top: 20px; font-size: 18px; font-weight: bold; text-align: center; }
+    #warning { margin-top: 15px; color: red; font-weight: bold; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>TQC 人工智慧應用與技術 測驗</h1>
+    <form id="quizForm">
+
+      <div class="question">
+        <p>1. 由於智慧一詞難以被定義，因此科學家在  1950 年代提出了一種測試機 器是否具有智慧的方式：若機器所表現的行為能不被辨識出其身分，則稱這台 機器是具有智慧。此測試的名稱為下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q1" value="A"> A. 圖靈  (Turing) 測試</label>
+          <label><input type="radio" name="q1" value="B"> B. 戈拉  (Gola) 測試</label>
+          <label><input type="radio" name="q1" value="C"> C. 高斯  (Gauss) 測試</label>
+          <label><input type="radio" name="q1" value="D"> D. 馮紐曼  (Von Neumann) 測試</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>2. 在 1980 年代，名為專家系統的人工智慧程式開始被許多公司所採 用。 請問專家系統的主要觀念為下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q2" value="A"> A. 模仿專家對特定問題進行學習的系統，主要元件為機器學習模組</label>
+          <label><input type="radio" name="q2" value="B"> B. 針對特定領域的問題進行回答，主要元件為 知識庫與 推理機</label>
+          <label><input type="radio" name="q2" value="C"> C. 能夠自己強迫的問題進行回答的人工智慧，主要元件為 機器學習模組與推
+理機</label>
+          <label><input type="radio" name="q2" value="D"> D. 針對廣泛的問題進行回答的人工智慧，主要元件為知識庫與機器學習模組</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>3. 電腦科學家對人工智慧的智慧等級進行了數個分類。其中，若人工智慧 能夠達到模仿人類解決特定問題的功能，則此人工智慧屬於下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q3" value="A"> A. 強人工智慧</label>
+          <label><input type="radio" name="q3" value="B"> B. 弱人工智慧</label>
+          <label><input type="radio" name="q3" value="C"> C. 混合式人工智慧</label>
+          <label><input type="radio" name="q3" value="D"> D. 衍生式人工智慧</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>4. 造成現今人工智慧蓬勃發展的原因是由於 支援人工智慧所需要的技術 以 及產業鏈逐漸完整 。目前人工智慧中 發展最蓬勃 的一支為機器學習 。由於機器 學習需要大量 的訓練資料 來訓練其模型，因此收集資料 是一件非常 重要的事 情。下列哪一項是 可以讓我們方便收集大量資料 的技術？</p>
+        <div class="options">
+          <label><input type="radio" name="q4" value="A"> A. 支援影像處理運算的硬體</label>
+          <label><input type="radio" name="q4" value="B"> B. 雲端服務的普及</label>
+          <label><input type="radio" name="q4" value="C"> C. 大數據系統 以及技術</label>
+          <label><input type="radio" name="q4" value="D"> D. 人工智慧理論的突 破</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>5. 造成現今人工智慧蓬勃發展的原因是由於 支援人工智慧所需要的技術 以 及產業鏈逐漸完整 。目前人工智慧中 發展最蓬勃 的一支為機器學習 。由於機器 學習需要大量 的訓練資料 來訓練其模型，因此能夠針對 大量收集到的資料進行 處理，以及觀察 是一件非常 重要的事情 。下列哪一項是 可以讓我們能夠快速地 處理大量資料 ？</p>
+        <div class="options">
+          <label><input type="radio" name="q5" value="A"> A. 支援影像處理運算的 硬體</label>
+          <label><input type="radio" name="q5" value="B"> B. 雲端服務的普及</label>
+          <label><input type="radio" name="q5" value="C"> C. 大數據系統 以及技術</label>
+          <label><input type="radio" name="q5" value="D"> D. 人工智慧理論的突 破</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>6. 現代所謂的人工智慧具有由許多演算法所組成的統稱。 下列哪一項不屬 於人工智慧領域中知名的 計算技術 的一環  ？</p>
+        <div class="options">
+          <label><input type="radio" name="q6" value="A"> A. 機器學習  (Machine Learning)</label>
+          <label><input type="radio" name="q6" value="B"> B. 演化計算  (Evolutionary Computation)</label>
+          <label><input type="radio" name="q6" value="C"> C. 資料探勘  (Data Mining)</label>
+          <label><input type="radio" name="q6" value="D"> D. 雲端運算  (Cloud Computing)</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>7. 造成現今人工智慧蓬勃發展的原因是由於 支援人工智慧所需要的技術 以 及產業鏈逐漸完整 。目前人工智慧中 發展最蓬勃 的一支為機器學習 。其中又以 類神經網路 為基礎的 深度學習 ，在近期 內讓許多以往用機器學習 來解決問題 的 表現又更上一層樓 ，廣泛地 被應用在各種領域 上。下列哪一項是 讓我們可以在 各種領域 上廣泛地佈建深度學習 模型的技術？</p>
+        <div class="options">
+          <label><input type="radio" name="q7" value="A"> A. 支援影像處理運算的硬體</label>
+          <label><input type="radio" name="q7" value="B"> B. 雲端服務的普及</label>
+          <label><input type="radio" name="q7" value="C"> C. 大數據系統 以及技術</label>
+          <label><input type="radio" name="q7" value="D"> D. 人工智慧理論的突破</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>8. 在人工智慧的發展上，自從  1986 年類神經網路中的倒傳遞學習演算法   (Backward Propagation) 被重新發明 來作為分水嶺 ，則人工智慧學者後期主 要的方法與思路為下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q8" value="A"> A. 基於規則 (Rule-based)的方法</label>
+          <label><input type="radio" name="q8" value="B"> B. 基於統計的方法</label>
+          <label><input type="radio" name="q8" value="C"> C. 屬於資料結構的方法</label>
+          <label><input type="radio" name="q8" value="D"> D. 基於經驗法則  (Trial -and-Error) 的方法</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>9. 1970年代初，人工智慧 首次遇到瓶頸 ，很多當代 最厲害的人工智慧都只 能解決某些問題中最簡單的部分，使得許多人 對於人工智慧的成效感到失望 。 其原因不包含下列哪一項 ？</p>
+        <div class="options">
+          <label><input type="radio" name="q9" value="A"> A. 基礎理論的不完備</label>
+          <label><input type="radio" name="q9" value="B"> B. 許多問題的計算複雜度成指數成長</label>
+          <label><input type="radio" name="q9" value="C"> C. 許多倫理道德的問題 讓大家懼怕人工智慧</label>
+          <label><input type="radio" name="q9" value="D"> D. 硬體計算能力 不夠強</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>10. 雲端運算就如同水電公共服務，將運算資源當成一種公共服務供給大家 使用，只要有連結網路的設備都能使 用運算資源。根據不同的服務，雲端運算 分為  IaaS (Infrastructure as a Service) 、SaaS (Software as a Service) 、PaaS  (Platform as a Service) 。請問  Google 的線上文書服務屬於下列哪一種？</p>
+        <div class="options">
+          <label><input type="radio" name="q10" value="A"> A. IaaS</label>
+          <label><input type="radio" name="q10" value="B"> B. SaaS</label>
+          <label><input type="radio" name="q10" value="C"> C. PaaS</label>
+          <label><input type="radio" name="q10" value="D"> D. IaaS、SaaS、PaaS 皆有</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>11. Amazon EC2 藉由提供  Web 服務的方式讓使用者可以彈性地 執行自己 的Amazon機器映像檔 ，使用者可以在這 個虛擬機器上運行任何自己想要的軟 體或應用程式。請問此種雲端服務屬於下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q11" value="A"> A. IaaS (Infrastructure as a Service)</label>
+          <label><input type="radio" name="q11" value="B"> B. SaaS (Software as a Service)</label>
+          <label><input type="radio" name="q11" value="C"> C. PaaS (Platform as a Service)</label>
+          <label><input type="radio" name="q11" value="D"> D. IaaS、SaaS、PaaS 皆有</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>12. 在 Google Cloud Platform (GCP) 上有一個  Google App Engine 的 服務。在Google APP Engine 的環境中，使用者不需要 維護伺服器，只需要將 網路應用程式上傳，然後 其他的使用者就可以使用該應用程式 所提供的服務。 請問  Google App Engine 屬於下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q12" value="A"> A. IaaS (Infrastructure as a  Service)</label>
+          <label><input type="radio" name="q12" value="B"> B. SaaS (Software as a Service)</label>
+          <label><input type="radio" name="q12" value="C"> C. PaaS (Platform as a Service)</label>
+          <label><input type="radio" name="q12" value="D"> D. IaaS、SaaS、PaaS 皆有</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>13. 某公司在創立初期由於成本因素，選擇了  Google Cloud Platform 來 建立該公司的系統架構。並且 部署該公司的服務在其上進行營運。請問   Google Cloud Platform 屬於下列哪一種？</p>
+        <div class="options">
+          <label><input type="radio" name="q13" value="A"> A. 公有雲  (Public Cloud)</label>
+          <label><input type="radio" name="q13" value="B"> B. 私有雲  (Priva te Cloud)</label>
+          <label><input type="radio" name="q13" value="C"> C. 社區雲  (Community Cloud)</label>
+          <label><input type="radio" name="q13" value="D"> D. 混合雲  (Hybrid Cloud)</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>14. 許多學校單位自行擁有機房並架設自己的雲端平台，且具有自己的資訊 管理人員來管理。為了因應校內學生以及職員於辦公的需要，這類的雲端平台 提供了相對應的服務。請問這種作法屬於下列哪一種？</p>
+        <div class="options">
+          <label><input type="radio" name="q14" value="A"> A. 公有雲  (Public Cloud)</label>
+          <label><input type="radio" name="q14" value="B"> B. 私有雲  (Private Cloud)</label>
+          <label><input type="radio" name="q14" value="C"> C. 社區雲  (Community Cloud)</label>
+          <label><input type="radio" name="q14" value="D"> D. 混合雲  (Hybrid Cl oud)</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>15. 許多大的公司 有自己的機房，並在其機房架設雲端平台來進行 對內或對 外的服務的營運。另外，同時也租用了類似  Google Cloud Platform 的雲端 系統來應付需求增加時的流量。請問此種架構屬於下列哪一種？</p>
+        <div class="options">
+          <label><input type="radio" name="q15" value="A"> A. 公有雲  (Public Cloud)</label>
+          <label><input type="radio" name="q15" value="B"> B. 私有雲  (Private Cloud)</label>
+          <label><input type="radio" name="q15" value="C"> C. 社群雲 (Community Cloud)</label>
+          <label><input type="radio" name="q15" value="D"> D. 混合雲  (Hybrid Cloud)</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>16. 在雲端運算的技術中，能夠將資源  (包含  CPU、硬碟、記憶體 甚至機 器) 自由且彈性地依照使用者 的需求分配給他們所需要的 運算資源 。例如說， 使用者可以要求 10個運算單元 、每一個各有 2個CPU、38G大小的RAM 以 及 2T 的硬碟。請問該功能是利用下列哪一種 技術達到 的？</p>
+        <div class="options">
+          <label><input type="radio" name="q16" value="A"> A. 虛擬化技術</label>
+          <label><input type="radio" name="q16" value="B"> B. 分散式運算技術</label>
+          <label><input type="radio" name="q16" value="C"> C. 最佳化技術</label>
+          <label><input type="radio" name="q16" value="D"> D. 互動式技術</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>17. 近幾年，容器  (Container) 技術快速成長，再加上新興雲端原生應 用的 普及化，虛擬化技術不再是企業  IT 架構轉型的唯一選擇 ，輕薄短小 的容器比 起傳統的虛擬器技術 ，更受到 效能導向企業的青睞 。請問下列哪一種不為容器 相關技術？</p>
+        <div class="options">
+          <label><input type="radio" name="q17" value="A"> A. Kubernetes</label>
+          <label><input type="radio" name="q17" value="B"> B. Amazon ECS</label>
+          <label><input type="radio" name="q17" value="C"> C. Spark</label>
+          <label><input type="radio" name="q17" value="D"> D. Docker</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>18. 大數據這個概念被提出時，專家學者普遍認為目前資料有著  4V 的特 性，使得傳統的資料庫以及資料處理方式無法有效率地處理。請問「 Facebook  需要從每天產生的  130TB 的 log 中作分析」現象是  4V 中的哪一種？</p>
+        <div class="options">
+          <label><input type="radio" name="q18" value="A"> A. Volume</label>
+          <label><input type="radio" name="q18" value="B"> B. Velocity</label>
+          <label><input type="radio" name="q18" value="C"> C. Variety</label>
+          <label><input type="radio" name="q18" value="D"> D. Veracity</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>19. 大數據這個概念被提出時，專家學者普遍認為目前資料有著  4V 的特 性，使得傳統的資料庫以及資料處理方式無法有效率地處理。請問「 Google  平均每秒處理  40000 個查詢」現象是  4V 中的哪一種？</p>
+        <div class="options">
+          <label><input type="radio" name="q19" value="A"> A. Volume</label>
+          <label><input type="radio" name="q19" value="B"> B. Velocity</label>
+          <label><input type="radio" name="q19" value="C"> C. Variety</label>
+          <label><input type="radio" name="q19" value="D"> D. Veracity</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>20. 大數據這個概念被提出時，專家學者普遍認為目前資料有著  4V 的特 性，使得傳統的資料庫以及資料處理方式無法有效率地處 理。請問 「Instagram 屬於文字、照片、影片、即時動態中分析目前大家最關注的主 題」現象是  4V 中的哪一種？</p>
+        <div class="options">
+          <label><input type="radio" name="q20" value="A"> A. Volume</label>
+          <label><input type="radio" name="q20" value="B"> B. Velocity</label>
+          <label><input type="radio" name="q20" value="C"> C. Variety</label>
+          <label><input type="radio" name="q20" value="D"> D. Veracity</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>21. 在面對大數據的挑戰時，第一個要考慮的就是如何將數據從來源端收集 到資料庫中以便處理。因為產生資料的速度 很快速而且可能來自眾多來源，因 此必須在大數據系統中佈 建一個訊息序列 (Message Queue) 的叢集來作為收集 資料和處理資料之間的中介系統 。請問下列哪一項 不為訊息 佇列？</p>
+        <div class="options">
+          <label><input type="radio" name="q21" value="A"> A. Kafka</label>
+          <label><input type="radio" name="q21" value="B"> B. RabbitMQ</label>
+          <label><input type="radio" name="q21" value="C"> C. Google PubSub</label>
+          <label><input type="radio" name="q21" value="D"> D. Amazon EC2</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>22. 大數據的系統通常 依照處理資料的需求 分成批次處理 (如:Hadoop 中的 MapReduce) 和即時處理 (如:Apache Storm 、Apache Spark -Streaming) 。請 問對於一個批次系統而言 ，下列哪一個效能 指標不適合 用來評量批次系統 ？</p>
+        <div class="options">
+          <label><input type="radio" name="q22" value="A"> A. 健全性 (Robustness)</label>
+          <label><input type="radio" name="q22" value="B"> B. 高吞吐量 (High Throughput)</label>
+          <label><input type="radio" name="q22" value="C"> C. 低延遲 (Low Latency)</label>
+          <label><input type="radio" name="q22" value="D"> D. 可以處理數據的規模 (Scale)</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>23. 關聯式資料庫主要被 調整用於執行規模小而讀寫 頻繁，或者大 批次極少 存取的工作。而對於處理大數據方面，效能則 表現不佳 (如為大量文件 建立索 引、…等等 )。NoSQL則為了解決此問題而產生的 。其資料儲存 可以不需要 固 定的表格 模式，也具有高度可以延伸的特徵 。請問下列何者不為 NoSQL？</p>
+        <div class="options">
+          <label><input type="radio" name="q23" value="A"> A. MongoDB</label>
+          <label><input type="radio" name="q23" value="B"> B. MariaDB</label>
+          <label><input type="radio" name="q23" value="C"> C. Redis</label>
+          <label><input type="radio" name="q23" value="D"> D. HBase</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>24. 在選擇  NoSQL 建構大數據系統時，會依照應用的不同而有不同的策 略。請問「建構  LinkedIn 上使用者與使用者之間的連結  (Connection) 關 係」情境下列哪一項最適用？</p>
+        <div class="options">
+          <label><input type="radio" name="q24" value="A"> A. MongoDB</label>
+          <label><input type="radio" name="q24" value="B"> B. Redis</label>
+          <label><input type="radio" name="q24" value="C"> C. Neo4j</label>
+          <label><input type="radio" name="q24" value="D"> D. HBase</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>25. 在選擇  NoSQL 建構大數據系統時，會依照應用的不同而有不同的策 略。請問「儲存各自文字、圖片、連結的部落格貼文」情境下列哪一項最適 用？</p>
+        <div class="options">
+          <label><input type="radio" name="q25" value="A"> A. MongoDB</label>
+          <label><input type="radio" name="q25" value="B"> B. Redis</label>
+          <label><input type="radio" name="q25" value="C"> C. Neo4j</label>
+          <label><input type="radio" name="q25" value="D"> D. HBase</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>26. 在選擇  NoSQL 建構大數據系統時，會依照應用的不同而有不同的策 略。請問「增加線上遊戲 瀏覽效率 ，使得應用者操作過程不用等待 資料讀寫 的 延遲」情境下 列哪一項最適用？</p>
+        <div class="options">
+          <label><input type="radio" name="q26" value="A"> A. MongoDB</label>
+          <label><input type="radio" name="q26" value="B"> B. Redis</label>
+          <label><input type="radio" name="q26" value="C"> C. Neo4j</label>
+          <label><input type="radio" name="q26" value="D"> D. HBase</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>27. 在選擇  NoSQL 建構大數據系統時，會依照應用的不同而有不同的策 略。請問「某電子郵件供應商儲存高達  120TB 的所有人的郵件」情境下列哪 一項最適用？</p>
+        <div class="options">
+          <label><input type="radio" name="q27" value="A"> A. MongoDB</label>
+          <label><input type="radio" name="q27" value="B"> B. Redis</label>
+          <label><input type="radio" name="q27" value="C"> C. Neo4j</label>
+          <label><input type="radio" name="q27" value="D"> D. HBase</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>28. 現在有許多企業開始進行與人工智慧有關的業務， 籌組企業人工智慧團 隊，最典型的角色不包含下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q28" value="A"> A. 機器學習科學家  (Machine Learning Scientist)</label>
+          <label><input type="radio" name="q28" value="B"> B. 資料科學家  (Data Scientist)</label>
+          <label><input type="radio" name="q28" value="C"> C. 銷售人員  (Sales)</label>
+          <label><input type="radio" name="q28" value="D"> D. 軟體工程師  (Software Engineer)</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>29. 隨著人工智慧的進步，許多企業開始以不同的面相來參與人工智慧相關 的行業。請問「新 漢和清大合作並打造 挑瑕疵機器人」之敘述的公司 以及其參 與的角度為下列哪一項 ？</p>
+        <div class="options">
+          <label><input type="radio" name="q29" value="A"> A. AI 平台供應者</label>
+          <label><input type="radio" name="q29" value="B"> B. AI 內容供應者</label>
+          <label><input type="radio" name="q29" value="C"> C. AI+</label>
+          <label><input type="radio" name="q29" value="D"> D. +AI</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>30. 隨著人工智慧的進步，許多企業開始以不同的面相來參與人工智慧相關 的行業。請問「 Microsoft 提供認知服務的人工智慧  API，使得使用者可以藉 由呼叫該  API 來達到語音辨識」之敘述的公司以及其參與的角度為下列哪一 項？</p>
+        <div class="options">
+          <label><input type="radio" name="q30" value="A"> A. AI 平台供應者</label>
+          <label><input type="radio" name="q30" value="B"> B. AI 內容供應者</label>
+          <label><input type="radio" name="q30" value="C"> C. AI+</label>
+          <label><input type="radio" name="q30" value="D"> D. +AI</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>31. 隨著人工智慧的進步，許多企業開始以不同的面相來參與人工智慧相關 的行業。請問「 Google 開放訓練內部 工程師用的課程 Machine Learning  Crash Course 給大眾免費學習」 之敘述的公司以及其 參與的角度為下列哪一 項？</p>
+        <div class="options">
+          <label><input type="radio" name="q31" value="A"> A. AI 平台供應者</label>
+          <label><input type="radio" name="q31" value="B"> B. AI 內容供應者</label>
+          <label><input type="radio" name="q31" value="C"> C. AI+</label>
+          <label><input type="radio" name="q31" value="D"> D. +AI</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>32. 隨著人工智慧的進步，許多企業開始以不同的面相來參與人工智慧相關 的行業。請問「 Amazon 開發出家庭用語音助理  Alexa」之敘述的公司以及其 參與的角度為下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q32" value="A"> A. AI 平台供應者</label>
+          <label><input type="radio" name="q32" value="B"> B. AI 內容供應者</label>
+          <label><input type="radio" name="q32" value="C"> C. AI+</label>
+          <label><input type="radio" name="q32" value="D"> D. +AI</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>33. 隨著人工智慧的進步，許多企業開始以不同的面相來參與人工智慧相關 的行業。請問「 Appie r 發展出  Aixon 人工智慧商業決策平台，幫助企業整合 各種資料，達到快速的資料洞察，幫助企業做出更快速更好的決策」之敘述的 公司以及其參與的角度為下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q33" value="A"> A. AI 平台供應者</label>
+          <label><input type="radio" name="q33" value="B"> B. AI 內容供應者</label>
+          <label><input type="radio" name="q33" value="C"> C. AI+</label>
+          <label><input type="radio" name="q33" value="D"> D. +AI</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>34. 隨著人工智慧的進步，許多企業開始以不同的面相來參與人工智慧相關 的行業。請問「中山醫學大學利用人工智慧技術建立 肺炎診斷模型」之敘述的 公司以及其參與的角度為下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q34" value="A"> A. AI 平台供應者</label>
+          <label><input type="radio" name="q34" value="B"> B. AI 內容供應者</label>
+          <label><input type="radio" name="q34" value="C"> C. AI+</label>
+          <label><input type="radio" name="q34" value="D"> D. +AI</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>35. 由於在執行人工智慧需要大量的運算，因此有許多硬體的廠商也投入  AI  硬體的製造。其中有一個方向是在終端設備中加入支援 人工智慧運算所需的硬 體，使得人工智慧建立出的模型在終端設備中也可以高效 能的執行。請問下列 哪一項不屬於這類硬體產品？</p>
+        <div class="options">
+          <label><input type="radio" name="q35" value="A"> A. iPhone X 的 Face ID 晶片</label>
+          <label><input type="radio" name="q35" value="B"> B. Google 的 Pixel Visual Core 晶片</label>
+          <label><input type="radio" name="q35" value="C"> C. Nvidia 的 Tesla P100 晶片</label>
+          <label><input type="radio" name="q35" value="D"> D. Intel 的 Neural Com pute Stick 晶片</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>36. 電腦視覺技術在人工智慧中扮演著「眼」的角色，藉由辨識及處理影像 資料所得到的資訊，可以發展更多有價值的應用。請問下列哪一種不為常見電 腦視覺技術的應用之一？</p>
+        <div class="options">
+          <label><input type="radio" name="q36" value="A"> A. 停車場用的車牌辨識系統</label>
+          <label><input type="radio" name="q36" value="B"> B. YouTube 的自動字幕產生器</label>
+          <label><input type="radio" name="q36" value="C"> C. 無人商店自動結帳</label>
+          <label><input type="radio" name="q36" value="D"> D. iPhone 上的  Face ID</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>37. 近來人工智慧廣泛地應用在醫療領域方面，世界各國的科學家與工程師 持續積極地與臨床醫學從業人員合作中，幫 助我們改善醫療品質與效果。請問 下列哪一項不為目前人工智慧應用在醫療領域上的案例？</p>
+        <div class="options">
+          <label><input type="radio" name="q37" value="A"> A. 接收醫療用的各種感應器的訊息來重建醫療用影像</label>
+          <label><input type="radio" name="q37" value="B"> B. 解讀病人的  X 光片判斷是否罹患肺炎</label>
+          <label><input type="radio" name="q37" value="C"> C. 人工智慧系統給出癌症判斷以及治療建議</label>
+          <label><input type="radio" name="q37" value="D"> D. 供醫生參考之雲端用藥系統</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>38. 自駕車根據其能力限制有區分成許多等級。現在搭載  Hardware -1 的特 斯拉  (Tesla) 自駕車中，宣稱其可以達到在高速公路上自動駕駛。但是要求駕 駛仍需在旁監看、隨時準備接手，且雙手不得離開方向盤。請問達到下列哪一 個等級？</p>
+        <div class="options">
+          <label><input type="radio" name="q38" value="A"> A. Level 1</label>
+          <label><input type="radio" name="q38" value="B"> B. Level 2</label>
+          <label><input type="radio" name="q38" value="C"> C. Level 3</label>
+          <label><input type="radio" name="q38" value="D"> D. Level 5</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>39. 關於自駕車的一則新聞：「在  2018 年 5 月日，由  Alphabet 旗下子 公司  Waymo 發展的  Google 自駕車，傳出車輛碰撞事故。但相比過去曾經 在山景城街道上發生車禍情況， Google 自駕車在此次事故中並非肇事車輛， 而是因為一台由人駕駛車輛為了閃避另一台車輛，導致撞擊當時處於低速自動 駕駛狀態的  Google 自駕車。」請問  Waymo 開發此類自駕車預設其等級為 下列哪一個 ？</p>
+        <div class="options">
+          <label><input type="radio" name="q39" value="A"> A. Level 1</label>
+          <label><input type="radio" name="q39" value="B"> B. Level 3</label>
+          <label><input type="radio" name="q39" value="C"> C. Level 4</label>
+          <label><input type="radio" name="q39" value="D"> D. Level 5</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>40. 關於自駕車的一則新聞：「奧迪在  2018 年發表全球首輛量產的自動駕 駛車，是全球首輛採用光學雷達  (LiDAR) 的量產車。該車上配備的  Traffic  Jam Pilot 主要是塞車情境設計，只能在高速公路上，且車速大約  60 公里以 下時才能啟用。」請問奧迪開發此類自駕車預設其等級為下列哪一個？</p>
+        <div class="options">
+          <label><input type="radio" name="q40" value="A"> A. Level 1</label>
+          <label><input type="radio" name="q40" value="B"> B. Level 3</label>
+          <label><input type="radio" name="q40" value="C"> C. Level 4</label>
+          <label><input type="radio" name="q40" value="D"> D. Level  5</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>41. 由於人工智慧技術的進步，自駕車技術也漸漸地從實驗室中走出來邁向 產品化。請問下列的技術中，哪一項不為自駕車中重要研究議題之一？</p>
+        <div class="options">
+          <label><input type="radio" name="q41" value="A"> A. 各種感測器技術</label>
+          <label><input type="radio" name="q41" value="B"> B. 超精細解析度地圖</label>
+          <label><input type="radio" name="q41" value="C"> C. 臉部辨識技術</label>
+          <label><input type="radio" name="q41" value="D"> D. 物體偵測技術</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>42. 根據聯合國統計， 2014 年全球大約有三分之二的人口在城市中生活。 預估  2050 年，全球大約將有三分之二的人口生活在城市中。因此許多城市都 朝著智慧城市化的目標邁進，藉由引進許多相關的技術來解決更多城市中所面 臨的問題挑戰。請問下列哪一項不為智 慧城市所要達成的願景之一？</p>
+        <div class="options">
+          <label><input type="radio" name="q42" value="A"> A. 更多的連結性</label>
+          <label><input type="radio" name="q42" value="B"> B. 更好的環境品質</label>
+          <label><input type="radio" name="q42" value="C"> C. 節省能源和成本</label>
+          <label><input type="radio" name="q42" value="D"> D. 創造政府更多的營收</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>43. 綜觀目前市面上的智慧音箱，除了具備基本對話能力，最普遍的應用具 備新聞、天氣、行事曆、說故事等資訊和內容的提供。除了  Amazon 之外， 其他廠牌的智慧音箱尚未將電子商務功能完整整合到音箱產品。請問下列哪一 項不為主要的原因？</p>
+        <div class="options">
+          <label><input type="radio" name="q43" value="A"> A. 智慧音箱上的產品呈現方式與現買傳統商品呈現方式差異大</label>
+          <label><input type="radio" name="q43" value="B"> B. 智慧音箱在整合第三方服務時可能有困難</label>
+          <label><input type="radio" name="q43" value="C"> C. 智慧音箱的語音辨識率仍然 不夠水準</label>
+          <label><input type="radio" name="q43" value="D"> D. 智慧音箱上支付流程困難</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>44. 人們在工作時，雖習慣用鍵盤或用觸控介面來與裝置溝通。但是在家中 希望與裝置互動的模式更偏向於用語音的方式，也讓智慧音箱打中  這個需求， 更順勢帶起週邊家電一起智慧化的使用情境。目前的智慧家庭裝置取得資料 後，可執行所謂的「邊緣運算」 (Edge Computing) 來實現智慧功能。請問下 列哪一項敘述中符合邊緣運算特性？</p>
+        <div class="options">
+          <label><input type="radio" name="q44" value="A"> A. 把感測到的資料傳回雲端進行運算後，實現智慧功能</label>
+          <label><input type="radio" name="q44" value="B"> B. 把智慧功能內建到設備本身的單點設備</label>
+          <label><input type="radio" name="q44" value="C"> C. 把智慧功能內建在數個設備 上，分散式地進行運算</label>
+          <label><input type="radio" name="q44" value="D"> D. 把感測到的資料傳到使用者在家中架設的伺服器進行運算後，實現智慧功
+能</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>45. 隨著語音辨識技術的進步， AI 語音助理也隨之產品化，漸漸地普及至每 一個人的家庭中。請問下列哪一項不為著名之  AI 語音助理的產品？</p>
+        <div class="options">
+          <label><input type="radio" name="q45" value="A"> A. Google Assistant</label>
+          <label><input type="radio" name="q45" value="B"> B. Microsoft Azure</label>
+          <label><input type="radio" name="q45" value="C"> C. Amazon Echo</label>
+          <label><input type="radio" name="q45" value="D"> D. Apple Siri</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>46. 智慧家庭整體也並未有共通的雲端服務標準可以讓業者追尋。各家業者 自然有心中「最佳人選」，也就是說 ，終端設備的製造廠商必須挑選一個或數 個雲端服務標準來支援。請問下列哪一個不為目前市面上智慧家庭雲端服務業 者？</p>
+        <div class="options">
+          <label><input type="radio" name="q46" value="A"> A. Facebook</label>
+          <label><input type="radio" name="q46" value="B"> B. Apple</label>
+          <label><input type="radio" name="q46" value="C"> C. Google</label>
+          <label><input type="radio" name="q46" value="D"> D. Amazon</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>47. 由於各種智慧家電的通訊標準不一致，目前已經有大廠開始進行標準融 合的工作，可望加速解決智慧家庭連網裝置不相容的問題。請問下列哪一項不 為智慧家電主流的通訊技術？</p>
+        <div class="options">
+          <label><input type="radio" name="q47" value="A"> A. ZigBee</label>
+          <label><input type="radio" name="q47" value="B"> B. WiFi</label>
+          <label><input type="radio" name="q47" value="C"> C. LTE</label>
+          <label><input type="radio" name="q47" value="D"> D. Bluetooth</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>48. 目前由於各種智慧家電的通訊 標準不一致，因此將這些智慧家庭的設備 相連起來需要一些額外的解決方法。請問下列哪一項不為目前的解決方法之 一？</p>
+        <div class="options">
+          <label><input type="radio" name="q48" value="A"> A. 透過雲端服務將智慧家電串連起來</label>
+          <label><input type="radio" name="q48" value="B"> B. 選用可以支援多重標準的裝置</label>
+          <label><input type="radio" name="q48" value="C"> C. 額外安裝閘道器作為中介</label>
+          <label><input type="radio" name="q48" value="D"> D. 安裝  AI 語音助理</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>49. 隨著人工智慧  (AI) 技術的更多突破，物聯網  (IoT) 萬物相聯的蓬勃發 展，兩者也匯流進化成  AIoT，正驅動「智慧應用」排山倒海而來。現在全球 科技龍頭們無不卯足全力搶進  AIoT 的市場。請問，物聯網  (IoT) 在 AIoT 的 主要功能 不含下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q49" value="A"> A. 資料感測</label>
+          <label><input type="radio" name="q49" value="B"> B. 資料分析</label>
+          <label><input type="radio" name="q49" value="C"> C. 資料傳輸</label>
+          <label><input type="radio" name="q49" value="D"> D. 資料收集與彙整</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>50. 隨著人工智慧  (AI) 技術的更多突破，物聯網  (IoT) 萬物相聯的蓬勃發 展，兩者也匯流進化成  AIoT，正驅動「智慧應用」排山倒海而來。現在全球 科技龍頭們無不卯足全力搶進  AIoT 的市場。請問，人工智慧  (AI) 部分在   AIoT 所扮演的角色與功能不含下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q50" value="A"> A. 資料前處理</label>
+          <label><input type="radio" name="q50" value="B"> B. 執行機器學習演算法</label>
+          <label><input type="radio" name="q50" value="C"> C. 發展適合終端設備的演算法</label>
+          <label><input type="radio" name="q50" value="D"> D. 資料傳輸與感測</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>51. 隨著人工智慧  (AI) 技術的更多突破，物聯網  (IoT) 萬物相聯的蓬勃發 展，兩者也匯流進化成  AIoT，正驅動「智慧應用」排山倒海而來。現在全球 科技龍頭們無不卯足全力搶進  AIoT 的市場。請問，目前要結合人工智慧與物 聯網的挑戰與發展方向不包含下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q51" value="A"> A. AI 應用的系統安全性問題</label>
+          <label><input type="radio" name="q51" value="B"> B. 加強雲端服務與終端設備的連結</label>
+          <label><input type="radio" name="q51" value="C"> C. 發展適用於終端的輕量化演算法</label>
+          <label><input type="radio" name="q51" value="D"> D. 發展低功耗的運算晶片</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>52. 智慧製造是指具有資訊自感知、自決策、自執行等功能的先進製造過 程、系統與模式的總 稱。請問智慧製造中的關鍵技術不包含下列哪一個？</p>
+        <div class="options">
+          <label><input type="radio" name="q52" value="A"> A. 人工智慧</label>
+          <label><input type="radio" name="q52" value="B"> B. 雲端計算</label>
+          <label><input type="radio" name="q52" value="C"> C. 物聯網</label>
+          <label><input type="radio" name="q52" value="D"> D. 精密機械</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>53. 智慧製造是指具有資訊自感知、自決策、自執行等功能的先進製造過 程、系統與模式的總稱。請問下列哪一個不是智慧製造系統能帶來的好處？</p>
+        <div class="options">
+          <label><input type="radio" name="q53" value="A"> A. 生產線遠端監控</label>
+          <label><input type="radio" name="q53" value="B"> B. 整廠的數據串連</label>
+          <label><input type="radio" name="q53" value="C"> C. 預測性維護</label>
+          <label><input type="radio" name="q53" value="D"> D. 增加工廠內生產產品的多樣性</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>54. 智慧製造是指具有資訊自感知、自決策、自執行等功能的先進製造過 程、系統與模式的總稱。一般來說，一個產業要引入智慧製造，下 列哪一個是 要先考慮的議題？</p>
+        <div class="options">
+          <label><input type="radio" name="q54" value="A"> A. 購買工業  4.0 的新設備</label>
+          <label><input type="radio" name="q54" value="B"> B. 取得工廠設備以及環境資料的方法</label>
+          <label><input type="radio" name="q54" value="C"> C. 在設備上增添感測器</label>
+          <label><input type="radio" name="q54" value="D"> D. 將設備連上網路</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>55. 近來在都市地區的空氣污染日益嚴重，因此空氣污偵測變成一個重要的 問題。有一個智慧城市的應用是政府發放空氣盒子給居民，使得居民可以安裝 在家中，偵測家中的空氣品質。對比於政府自行架設空污觀測站，下列哪一個 不為發放空氣盒子的好處？</p>
+        <div class="options">
+          <label><input type="radio" name="q55" value="A"> A. 降低安裝成本</label>
+          <label><input type="radio" name="q55" value="B"> B. 獲得更精確的空氣品質資料</label>
+          <label><input type="radio" name="q55" value="C"> C. 提高空氣品質偵測的採樣率</label>
+          <label><input type="radio" name="q55" value="D"> D. 增加空氣偵測 的即時性</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>56. 近來在都市地區的空氣污染日益嚴重，因此空氣污偵測變成一個重要的 問題。有一個智慧城市的應用是政府發放空氣盒子給居民，使得居民可以安裝 在家中，偵測家中的空氣品質。對比於政府自行架設空污觀測站，下列哪一個 不為發放空氣盒子的缺點？</p>
+        <div class="options">
+          <label><input type="radio" name="q56" value="A"> A. 需要居民安裝額外的設備</label>
+          <label><input type="radio" name="q56" value="B"> B. 可即時偵測家中空污的程度</label>
+          <label><input type="radio" name="q56" value="C"> C. 準確度較差</label>
+          <label><input type="radio" name="q56" value="D"> D. 可能有隱私權疑慮</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>57. 智慧城市的目標在於感知居民的資料與所有的設備系統形成經濟、有效 的互動，讓人們可以有更好的工作效率及生活品質。每一個智慧城市 都有其不 同發展的主題。有許多城市致力於節能減碳，例如荷蘭阿姆斯特丹致力於低碳 環保的目標，希望在  2025 年能夠達到相較於  1990 年減碳  25% 的目標。 請問下列哪一項不為節能減碳的相關措施？</p>
+        <div class="options">
+          <label><input type="radio" name="q57" value="A"> A. 智慧照明</label>
+          <label><input type="radio" name="q57" value="B"> B. 車輛共乘</label>
+          <label><input type="radio" name="q57" value="C"> C. 電動車充電網路</label>
+          <label><input type="radio" name="q57" value="D"> D. 智慧地調控通勤巴士的間距</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>58. 智慧城市的目標在於感知居民的資料與所有的設備系統形成經濟、有效 的互動，讓人們可以有更好的工作效率及生活品質。每一個智慧城市都有其不 同發展的主題。為了能夠更有效率的使用資源，智慧電網便是一個受到大家關 注的議題。請問下列哪一項不為智慧電網的特性？</p>
+        <div class="options">
+          <label><input type="radio" name="q58" value="A"> A. 架設智慧電表讓民眾了解用電情形</label>
+          <label><input type="radio" name="q58" value="B"> B. 動態調整電廠發電與再生能源比例</label>
+          <label><input type="radio" name="q58" value="C"> C. 供電方向為單向而非雙向</label>
+          <label><input type="radio" name="q58" value="D"> D. 尖峰時段可能產生供電量不足的情形</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>59. 智慧城市的目標在於感知居民的資料與所有的設備系統形成經濟、有效 的互動，讓人們可以有更好的工作效率及生活品質。每一個智慧城市都有其不 同發展的主題。請問下列哪一項不為智慧政府的議題？</p>
+        <div class="options">
+          <label><input type="radio" name="q59" value="A"> A. 政府線上服務數量</label>
+          <label><input type="radio" name="q59" value="B"> B. 政府公務人員數量減少</label>
+          <label><input type="radio" name="q59" value="C"> C. 開放資料程度</label>
+          <label><input type="radio" name="q59" value="D"> D. 個人隱私保護措施</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>60. 智慧城市的目標在於感知居民的資料與所有的設備系統形成經濟、有效 的互動，讓人們可以有更好的工作效率及生活品質。每一個智慧城市都有其不 同發展的主題。許多先進城市中因為老年人口增加，因此銀髮族照護變成一個 重要的議題。請問下列哪一項不為智慧城市中銀髮族照護的措施？</p>
+        <div class="options">
+          <label><input type="radio" name="q60" value="A"> A. 提供遠端照護平台</label>
+          <label><input type="radio" name="q60" value="B"> B. 建置意外通報平台</label>
+          <label><input type="radio" name="q60" value="C"> C. 生命徵象雲端管理平台協助</label>
+          <label><input type="radio" name="q60" value="D"> D. 依照需求設置安養院</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>61. 智慧城市的目標在於感知居民的資料與所有的設備系統形成經濟、有效 的互動，讓人們可以有更好的工作效率及生活品質。智慧城市中有一項重要的 任務即在改善城市中的交通品質。請問下列哪一項不為目前智慧城市中收集交 通資訊的管道之一？</p>
+        <div class="options">
+          <label><input type="radio" name="q61" value="A"> A. 智慧卡使用紀錄</label>
+          <label><input type="radio" name="q61" value="B"> B. 高速公路上的自動收費系統</label>
+          <label><input type="radio" name="q61" value="C"> C. 車聯網</label>
+          <label><input type="radio" name="q61" value="D"> D. 紅外線監視系統</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>62. 智慧城市的目標在於感知居民的資料與所有的設備系統形成經濟、有效 的互動，讓人們可以有更好的工作效率及生活品質。每一個智慧城市都有其不 同發展的主題。請問下列哪一項不為智慧移動的議題？</p>
+        <div class="options">
+          <label><input type="radio" name="q62" value="A"> A. 公共運輸利用率</label>
+          <label><input type="radio" name="q62" value="B"> B. 綠色與非機動性運輸使用量</label>
+          <label><input type="radio" name="q62" value="C"> C. 運輸設施與  ICT 整合程度</label>
+          <label><input type="radio" name="q62" value="D"> D. 居民擁有運輸設備的種類及數量</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>63. 許多企業在人工智慧興起的這一波浪潮中，首先考慮引進的就是人工智 慧客服。人工智慧客服可以進行重複性極高的工作，讓人去處理更需要複雜判 斷能力的客服事件。請問下列哪一項不為一個成功的人工智慧客服系統之必要 元素？</p>
+        <div class="options">
+          <label><input type="radio" name="q63" value="A"> A. 條列式的問題答覆資料庫</label>
+          <label><input type="radio" name="q63" value="B"> B. 專業的客服人員</label>
+          <label><input type="radio" name="q63" value="C"> C. 聊天機器人</label>
+          <label><input type="radio" name="q63" value="D"> D. 手機  APP</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>64. 應用人工智慧於金融業中可以讓業者得到顯著而且直接獲益，這項技術 我們通稱為  FinTec h。在  FinTech 中目前較成熟的  AI 應用是對抗詐騙風 險、管控經鹽風險、消除風險和精準行銷。請問「根據過去  20 年數據，針對 每個車禍核案案例，利用圖像識別的技術以及處理文件內容識別，和車禍圖像 比對，來辨識圖片資訊，以決定是否核賠。」情境是屬於下列哪一種？</p>
+        <div class="options">
+          <label><input type="radio" name="q64" value="A"> A. 對抗詐欺風險</label>
+          <label><input type="radio" name="q64" value="B"> B. 管控經營風險</label>
+          <label><input type="radio" name="q64" value="C"> C. 消除風險</label>
+          <label><input type="radio" name="q64" value="D"> D. 精準行銷</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>65. 應用人工智慧於金融業中可以讓業者得到顯著而且直接獲益，這項技術 我們通稱為  FinTech。在  FinTech 中目前較成熟的  AI 應用是對抗詐騙風 險、管控經 營風險、消除風險和精準行銷。請問「建立個人特徵資料、資產數 據和其他數據，來決定推銷給客戶適當的商品，避免產品品種雷同，或是老舊 等情況出現」情境是屬於下列哪一種？</p>
+        <div class="options">
+          <label><input type="radio" name="q65" value="A"> A. 對抗詐欺風險</label>
+          <label><input type="radio" name="q65" value="B"> B. 管控經營風險</label>
+          <label><input type="radio" name="q65" value="C"> C. 消除風險</label>
+          <label><input type="radio" name="q65" value="D"> D. 精準行銷</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>66. 應用人工智慧於金融業中可以讓業者得到顯著而且直接獲益，這項技術 我們通稱為  FinTech。在  FinTech 中目前較成熟的  AI 應用是對抗詐騙風 險、管控經鹽風險、消除風險和精準行銷。請問「為企業做行業外部評估以及 輿情分析，藉由收集整合分析各種揭露資訊來看市場對於相關利害企業的評價 為正是或是負。」情境是屬於下列哪一種？</p>
+        <div class="options">
+          <label><input type="radio" name="q66" value="A"> A. 對抗詐欺風險</label>
+          <label><input type="radio" name="q66" value="B"> B. 管控經營風險</label>
+          <label><input type="radio" name="q66" value="C"> C. 消除風險</label>
+          <label><input type="radio" name="q66" value="D"> D. 精準行銷</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>67. 近伴隨人工智慧與感測技術的技術突破，人體最重要的資訊都可以透過 智慧裝置感測，這些具體數據可以進一步做呈現以及分析，發展智慧醫療的各 種應用。這就是所謂的  AIoH (AI + Health) 。請問台灣在  AIoH 上具有獨特的 優勢為下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q67" value="A"> A. 台灣在製作精密醫療設備的技術獨步全球</label>
+          <label><input type="radio" name="q67" value="B"> B. 台灣的健保資料庫完整保存病人身體資訊以及診斷紀錄</label>
+          <label><input type="radio" name="q67" value="C"> C. 台灣在製作以及整合晶片的技術領先</label>
+          <label><input type="radio" name="q67" value="D"> D. 台灣在健保的制度下有很多人去看醫生</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>68. 近伴隨人工智慧與感測技術的技術突破，人體最重要的資訊都可以透過 智慧裝置感測，這些具體數據可以進一步做呈現以及分析，發展智慧醫療的各 種應用。這就是所謂的  AIoH (AI + Health) 。請問下列哪 一項為在  AIoH 中最 先考慮的議題？</p>
+        <div class="options">
+          <label><input type="radio" name="q68" value="A"> A. 個人隱私以及醫療倫理</label>
+          <label><input type="radio" name="q68" value="B"> B. 製作高精度的硬體設施</label>
+          <label><input type="radio" name="q68" value="C"> C. AIoH 中的應用是否具有實用性</label>
+          <label><input type="radio" name="q68" value="D"> D. 是否有專業醫療人員進行系統的驗證與操作</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>69. 近伴隨人工智慧與感測技術的技術突破，人體最重要的資訊都可以透過 智慧裝置感測，這些具體數據可以進一步做呈現以及分析，發展智慧醫療的各 種應用。這就是所謂的  AIoH (AI + Health) 。請問下列哪一項不為  AIoH 的應 用之一？</p>
+        <div class="options">
+          <label><input type="radio" name="q69" value="A"> A. 自駕車的防睡眠裝置</label>
+          <label><input type="radio" name="q69" value="B"> B. 協助醫護人員與外 界溝通的腦機介面技術</label>
+          <label><input type="radio" name="q69" value="C"> C. 皮膚癌  AI 診斷軟體</label>
+          <label><input type="radio" name="q69" value="D"> D. 指紋辨識解鎖系統</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>70. 請問在「 IBM Watson Health 健康長端伊  (Kyu Rhee) 博士曾提出醫療   AI 三大原則：目的、透明和技能，都是為了幫助人類，而不是取而代之，瑞伊 博士認為  AI 是一種新技能，當『人類 +AI』(Human+AI) ，才完整增強人們的 能力。」該則新聞中所謂的「人類 +AI」的適用範圍不包含下列哪一項？</p>
+        <div class="options">
+          <label><input type="radio" name="q70" value="A"> A. 臨床醫藥人員</label>
+          <label><input type="radio" name="q70" value="B"> B. 管理人員</label>
+          <label><input type="radio" name="q70" value="C"> C. 健康  IT 專業人員</label>
+          <label><input type="radio" name="q70" value="D"> D. 一般民眾</label>
+        </div>
+      </div>
+    
+      <div class="question">
+        <p>71. 目前在世界上，許多貧窮的人相較於富有的人因為無法接受適當醫療而 產生較多的失能以及壽命的縮短。這就是因為社會、經濟、教育等種種不平等 造成的醫療不平等。在人工智慧技術的蓬勃發展，「平等醫療」有可能實現。 請問，人工智慧在平等醫療的概念下扮演什麼角色？</p>
+        <div class="options">
+          <label><input type="radio" name="q71" value="A"> A. 透過人工智慧對病人做初步的診斷</label>
+          <label><input type="radio" name="q71" value="B"> B. 透過人工智慧對病人選擇適當的醫院</label>
+          <label><input type="radio" name="q71" value="C"> C. 透過人工智慧讓財產分配更平均使得經濟上的條件更公平</label>
+          <label><input type="radio" name="q71" value="D"> D. 透過人工智慧取代醫生進行治療</label>
+        </div>
+      </div>
+    
+      <button type="button" onclick="submitQuiz()">提交答案</button>
+    </form>
+    <div id="warning"></div>
+    <div id="result"></div>
+  </div>
+  <script>
+    const answers = {'q1': 'A', 'q2': 'B', 'q3': 'B', 'q4': 'B', 'q5': 'C', 'q6': 'D', 'q7': 'A', 'q8': 'B', 'q9': 'C', 'q10': 'B', 'q11': 'B', 'q12': 'C', 'q13': 'A', 'q14': 'B', 'q15': 'D', 'q16': 'A', 'q17': 'C', 'q18': 'A', 'q19': 'B', 'q20': 'C', 'q21': 'D', 'q22': 'C', 'q23': 'B', 'q24': 'C', 'q25': 'A', 'q26': 'B', 'q27': 'D', 'q28': 'C', 'q29': 'D', 'q30': 'A', 'q31': 'B', 'q32': 'C', 'q33': 'A', 'q34': 'D', 'q35': 'C', 'q36': 'B', 'q37': 'D', 'q38': 'B', 'q39': 'D', 'q40': 'B', 'q41': 'C', 'q42': 'D', 'q43': 'C', 'q44': 'B', 'q45': 'B', 'q46': 'A', 'q47': 'C', 'q48': 'D', 'q49': 'B', 'q50': 'D', 'q51': 'B', 'q52': 'D', 'q53': 'D', 'q54': 'B', 'q55': 'B', 'q56': 'B', 'q57': 'C', 'q58': 'C', 'q59': 'B', 'q60': 'D', 'q61': 'C', 'q62': 'D', 'q63': 'D', 'q64': 'A', 'q65': 'D', 'q66': 'B', 'q67': 'B', 'q68': 'A', 'q69': 'D', 'q70': 'A', 'q71': 'A'};
+
+    function submitQuiz() {
+      const form = document.getElementById("quizForm");
+      let total = Object.keys(answers).length;
+
+      // 檢查是否有未作答題目
+      for (let key in answers) {
+        let selected = form.querySelector(`input[name=${key}]:checked`);
+        if (!selected) {
+          document.getElementById("warning").innerText = "⚠️ 你還有未作答的題目，請完成所有題目後再提交！";
+          return; // 阻止提交
+        }
+      }
+      document.getElementById("warning").innerText = ""; // 清除警告
+
+      let score = 0;
+
+      // 清理舊標記
+      document.querySelectorAll(".correct-answer").forEach(el => el.remove());
+      document.querySelectorAll("label").forEach(el => el.style.background = "#f0f0f0");
+
+      for (let key in answers) {
+        let correct = answers[key];
+        let selected = form.querySelector(`input[name=${key}]:checked`);
+        let options = form.querySelectorAll(`input[name=${key}]`);
+
+        if (selected && selected.value === correct) {
+          score++;
+          selected.parentElement.style.background = "#c8e6c9"; // 綠色 (答對)
+        } else {
+          // 標記正確答案
+          options.forEach(opt => {
+            if (opt.value === correct) {
+              opt.parentElement.style.background = "#c8e6c9";
+              let span = document.createElement("span");
+              span.innerText = " ← 正確答案";
+              span.style.color = "green";
+              span.classList.add("correct-answer");
+              opt.parentElement.appendChild(span);
+            }
+          });
+          if (selected) {
+            selected.parentElement.style.background = "#ffcdd2"; // 紅色 (錯誤)
+          }
+        }
+      }
+
+      document.getElementById("result").innerText =
+        `你的得分：${score} / ${total}`;
+    }
+  </script>
+</body>
+</html>
