@@ -238,6 +238,19 @@ button {
     font-weight: bold;
 }
 
+.option.disabled {
+    pointer-events: none;
+}
+
+.submit-btn:disabled {
+    background: #bdc3c7;
+    cursor: not-allowed;
+}
+
+.submit-btn:disabled:hover {
+    background: #bdc3c7;
+}
+
 @media (max-width: 768px) {
     .main-content {
         flex-direction: column;

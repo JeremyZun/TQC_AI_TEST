@@ -944,6 +944,7 @@ const questions = [
 let currentQuestionIndex = 0;
 let userAnswers = new Array(questions.length).fill(null);
 let score = 0;
+let isExamFinished = false;
 
 // DOM 元素
 const category1Element = document.getElementById('category1');
@@ -1008,28 +1009,48 @@ function displayQuestion() {
             optionElement.classList.add('selected');
         }
         
-        // 點擊選項
-        optionElement.addEventListener('click', () => {
-            // 移除其他選項的selected類
-            document.querySelectorAll('.option').forEach(opt => {
-                opt.classList.remove('selected');
+        // 如果測驗已完成，顯示正確/錯誤答案
+        if (isExamFinished) {
+            if (index === question.correctAnswer) {
+                optionElement.classList.add('correct');
+            } else if (index === userAnswers[currentQuestionIndex] && index !== question.correctAnswer) {
+                optionElement.classList.add('incorrect');
+            }
+            optionElement.style.pointerEvents = 'none';
+        } else {
+            // 點擊選項（僅在測驗未完成時可用）
+            optionElement.addEventListener('click', () => {
+                // 移除其他選項的selected類
+                document.querySelectorAll('.option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // 添加selected類到當前選項
+                optionElement.classList.add('selected');
+                
+                // 保存用戶答案
+                userAnswers[currentQuestionIndex] = index;
+                
+                // 更新題目列表中的狀態
+                updateQuestionStatus();
+                
+                // 更新進度和提交按鈕狀態
+                updateProgressAndScore();
             });
-            
-            // 添加selected類到當前選項
-            optionElement.classList.add('selected');
-            
-            // 保存用戶答案
-            userAnswers[currentQuestionIndex] = index;
-            
-            // 更新題目列表中的狀態
-            updateQuestionStatus();
-        });
+        }
         
         optionsContainer.appendChild(optionElement);
     });
     
-    // 隱藏反饋
-    feedbackElement.style.display = 'none';
+    // 如果測驗已完成且當前題目答錯，顯示反饋
+    if (isExamFinished && userAnswers[currentQuestionIndex] !== question.correctAnswer) {
+        feedbackElement.textContent = `正確答案是：${question.options[question.correctAnswer]}。${question.explanation}`;
+        feedbackElement.className = 'feedback incorrect';
+        feedbackElement.style.display = 'block';
+    } else {
+        // 隱藏反饋
+        feedbackElement.style.display = 'none';
+    }
     
     // 更新導航按鈕狀態
     updateNavigationButtons();
@@ -1108,46 +1129,76 @@ function updateProgressAndScore() {
     // 更新顯示
     progressElement.textContent = `${answeredCount}/${questions.length}`;
     scoreElement.textContent = score;
+    
+    // 檢查是否所有題目都已回答
+    const allAnswered = userAnswers.every(answer => answer !== null);
+    
+    // 啟用或禁用提交按鈕
+    submitBtn.disabled = !allAnswered || isExamFinished;
+    
+    // 更新提交按鈕文字
+    if (isExamFinished) {
+        submitBtn.textContent = '測驗已完成';
+    } else {
+        submitBtn.textContent = allAnswered ? '提交答案' : '請完成所有題目';
+    }
 }
 
 // 提交答案
 function submitAnswer() {
-    const question = questions[currentQuestionIndex];
-    const selectedOption = userAnswers[currentQuestionIndex];
-    
-    // 檢查是否已選擇答案
-    if (selectedOption === null) {
-        alert('請先選擇一個答案！');
+    if (isExamFinished) {
+        alert('測驗已完成，請重新載入頁面開始新的測驗');
         return;
     }
     
-    // 顯示反饋
-    feedbackElement.style.display = 'block';
-    
-    // 檢查答案是否正確
-    if (selectedOption === question.correctAnswer) {
-        feedbackElement.textContent = `正確！${question.explanation}`;
-        feedbackElement.className = 'feedback correct';
-    } else {
-        feedbackElement.textContent = `錯誤！正確答案是：${question.options[question.correctAnswer]}。${question.explanation}`;
-        feedbackElement.className = 'feedback incorrect';
+    const allAnswered = userAnswers.every(answer => answer !== null);
+    if (!allAnswered) {
+        alert('請先完成所有題目！');
+        return;
     }
     
-    // 更新選項樣式
-    const options = document.querySelectorAll('.option');
-    options.forEach((option, index) => {
-        if (index === question.correctAnswer) {
-            option.classList.add('correct');
-        } else if (index === selectedOption && index !== question.correctAnswer) {
-            option.classList.add('incorrect');
+    // 標記測驗已完成
+    isExamFinished = true;
+    
+    // 禁用所有選項
+    document.querySelectorAll('.option').forEach(option => {
+        option.style.pointerEvents = 'none';
+    });
+    
+    // 顯示所有題目的正確答案
+    questions.forEach((question, index) => {
+        const questionItems = document.querySelectorAll('.question-item');
+        const questionItem = questionItems[index];
+        
+        // 標記題目狀態
+        if (userAnswers[index] === question.correctAnswer) {
+            questionItem.classList.add('answered');
+        } else {
+            questionItem.classList.add('incorrect');
+        }
+        
+        // 如果當前顯示的是錯誤的題目，顯示正確答案
+        if (currentQuestionIndex === index && userAnswers[index] !== question.correctAnswer) {
+            const options = document.querySelectorAll('.option');
+            options.forEach((option, optIndex) => {
+                if (optIndex === question.correctAnswer) {
+                    option.classList.add('correct');
+                } else if (optIndex === userAnswers[index]) {
+                    option.classList.add('incorrect');
+                }
+            });
+            
+            feedbackElement.textContent = `正確答案是：${question.options[question.correctAnswer]}。${question.explanation}`;
+            feedbackElement.className = 'feedback incorrect';
+            feedbackElement.style.display = 'block';
         }
     });
     
-    // 更新題目列表中的狀態
-    updateQuestionStatus();
-    
-    // 更新進度和分數
+    // 更新提交按鈕狀態
     updateProgressAndScore();
+    
+    // 顯示總分
+    alert(`測驗完成！您的總分是：${score}/${questions.length}`);
 }
 
 // 事件監聽器
