@@ -112,47 +112,6 @@
     <button class="feature-btn" id="custom-quiz-btn">
         🎯 自定義測驗
     </button>
-    <button class="feature-btn" id="leaderboard-btn">
-        🏆 學習排行榜
-    </button>
-</div>
-
-<!-- 在模態框區域添加排行榜模態框 -->
-<div class="modal" id="leaderboard-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>🏆 學習排行榜</h2>
-            <span class="close" id="close-leaderboard">&times;</span>
-        </div>
-        <div class="modal-body">
-            <div class="leaderboard-controls">
-                <div class="sort-options">
-                    <label>排序方式:</label>
-                    <select id="leaderboard-sort">
-                        <option value="score">總分</option>
-                        <option value="accuracy">正確率</option>
-                        <option value="progress">學習進度</option>
-                        <option value="time">學習時間</option>
-                    </select>
-                </div>
-                <div class="filter-options">
-                    <label>顯示:</label>
-                    <select id="leaderboard-filter">
-                        <option value="all">全部用戶</option>
-                        <option value="today">今日排行</option>
-                        <option value="week">本週排行</option>
-                    </select>
-                </div>
-            </div>
-            <div class="leaderboard-list" id="leaderboard-list">
-                <!-- 排行榜內容將由JS生成 -->
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-secondary" id="refresh-leaderboard">刷新</button>
-            <button class="btn-primary" id="close-leaderboard-btn">關閉</button>
-        </div>
-    </div>
 </div>
 
 <body>
