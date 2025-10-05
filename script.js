@@ -965,6 +965,12 @@ let alertCancel = document.getElementById('alert-cancel');
 let customQuizQuestions = [];
 let customQuizTime = 30 * 60;
 
+// 智慧錯題本相關變數
+let wrongQuestionsHistory = [];
+let currentWrongQuestionsFilter = 'all';
+let wrongQuestionsTrainingMode = false;
+let wrongQuestionsTrainingIndex = 0;
+
 // 新增：緩存 DOM 查詢結果
 const domCache = {
     questionItems: null,
@@ -1036,6 +1042,17 @@ const previewQuizBtn = document.getElementById('preview-quiz');
 const startCustomQuizBtn = document.getElementById('start-custom-quiz');
 const previewContent = document.getElementById('preview-content');
 
+// 智慧錯題本元素
+const wrongQuestionsBtn = document.getElementById('wrong-questions-btn');
+const wrongQuestionsModal = document.getElementById('wrong-questions-modal');
+const closeWrongQuestions = document.getElementById('close-wrong-questions');
+const closeWrongQuestionsBtn = document.getElementById('close-wrong-questions-btn');
+const wrongQuestionsStats = document.getElementById('wrong-questions-stats');
+const wrongQuestionsFilter = document.getElementById('wrong-questions-filter');
+const wrongQuestionsList = document.getElementById('wrong-questions-list');
+const exportWrongQuestionsBtn = document.getElementById('export-wrong-questions');
+const startWrongQuestionsTrainingBtn = document.getElementById('start-wrong-questions-training');
+
 // 事件監聽器
 analysisBtn.addEventListener('click', showAnalysisReport);
 customQuizBtn.addEventListener('click', showCustomQuizModal);
@@ -1045,6 +1062,13 @@ closeCustomQuiz.addEventListener('click', hideCustomQuizModal);
 previewQuizBtn.addEventListener('click', updateQuizPreview);
 startCustomQuizBtn.addEventListener('click', startCustomQuiz);
 exportAnalysisBtn.addEventListener('click', exportAnalysisReport);
+
+// 智慧錯題本事件監聽器
+wrongQuestionsBtn.addEventListener('click', showWrongQuestionsModal);
+closeWrongQuestions.addEventListener('click', hideWrongQuestionsModal);
+closeWrongQuestionsBtn.addEventListener('click', hideWrongQuestionsModal);
+exportWrongQuestionsBtn.addEventListener('click', exportWrongQuestions);
+startWrongQuestionsTrainingBtn.addEventListener('click', startWrongQuestionsTraining);
 
 // 在事件監聽器區域新增
 weaknessTrainingBtn.addEventListener('click', startWeaknessTraining);
@@ -1062,9 +1086,465 @@ document.addEventListener('keydown', handleKeyboardShortcuts);
 
 // 點擊模態框外部關閉
 window.addEventListener('click', (e) => {
+    if (e.target === wrongQuestionsModal) hideWrongQuestionsModal();
     if (e.target === analysisModal) hideAnalysisModal();
     if (e.target === customQuizModal) hideCustomQuizModal();
 });
+
+// 顯示智慧錯題本模態框
+function showWrongQuestionsModal() {
+    updateWrongQuestionsHistory();
+    renderWrongQuestionsStats();
+    renderWrongQuestionsList();
+    wrongQuestionsModal.classList.add('show');
+}
+
+// 隱藏智慧錯題本模態框
+function hideWrongQuestionsModal() {
+    wrongQuestionsModal.classList.remove('show');
+}
+
+// 更新錯題歷史記錄
+function updateWrongQuestionsHistory() {
+    wrongQuestionsHistory = [];
+    
+    const currentQuestions = currentMode === 'exam' ? examQuestions : questions;
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
+    
+    currentQuestions.forEach((question, index) => {
+        if (currentAnswers[index] !== null && currentAnswers[index] !== question.correctAnswer) {
+            // 檢查是否已經存在相同的錯題記錄
+            const existingRecord = wrongQuestionsHistory.find(
+                record => record.questionId === question.id
+            );
+            
+            if (existingRecord) {
+                // 更新現有記錄
+                existingRecord.errorCount++;
+                existingRecord.lastErrorTime = Date.now();
+                existingRecord.userAnswers.push(currentAnswers[index]);
+            } else {
+                // 創建新記錄
+                wrongQuestionsHistory.push({
+                    questionId: question.id,
+                    question: question,
+                    originalIndex: index,
+                    category: question.category,
+                    errorCount: 1,
+                    firstErrorTime: Date.now(),
+                    lastErrorTime: Date.now(),
+                    userAnswers: [currentAnswers[index]]
+                });
+            }
+        }
+    });
+    
+    // 按錯誤次數和最近錯誤時間排序
+    wrongQuestionsHistory.sort((a, b) => {
+        if (b.errorCount !== a.errorCount) {
+            return b.errorCount - a.errorCount;
+        }
+        return b.lastErrorTime - a.lastErrorTime;
+    });
+    
+    // 保存到本地存儲
+    saveWrongQuestionsHistory();
+}
+
+// 保存錯題歷史到本地存儲
+function saveWrongQuestionsHistory() {
+    try {
+        localStorage.setItem('tqc-ai-wrong-questions', JSON.stringify(wrongQuestionsHistory));
+    } catch (error) {
+        console.warn('無法保存錯題歷史:', error);
+    }
+}
+
+// 從本地存儲載入錯題歷史
+function loadWrongQuestionsHistory() {
+    try {
+        const saved = localStorage.getItem('tqc-ai-wrong-questions');
+        if (saved) {
+            wrongQuestionsHistory = JSON.parse(saved);
+        }
+    } catch (error) {
+        console.warn('無法載入錯題歷史:', error);
+        wrongQuestionsHistory = [];
+    }
+}
+
+// 渲染錯題統計資訊
+function renderWrongQuestionsStats() {
+    const totalWrong = wrongQuestionsHistory.length;
+    const totalErrors = wrongQuestionsHistory.reduce((sum, item) => sum + item.errorCount, 0);
+    const category1Wrong = wrongQuestionsHistory.filter(item => item.category === 1).length;
+    const category2Wrong = wrongQuestionsHistory.filter(item => item.category === 2).length;
+    
+    wrongQuestionsStats.innerHTML = `
+        <div class="wrong-stat-item">
+            <div class="wrong-stat-value">${totalWrong}</div>
+            <div class="wrong-stat-label">錯題數量</div>
+        </div>
+        <div class="wrong-stat-item">
+            <div class="wrong-stat-value">${totalErrors}</div>
+            <div class="wrong-stat-label">總錯誤次數</div>
+        </div>
+        <div class="wrong-stat-item">
+            <div class="wrong-stat-value">${category1Wrong}</div>
+            <div class="wrong-stat-label">AI發展歷程</div>
+        </div>
+        <div class="wrong-stat-item">
+            <div class="wrong-stat-value">${category2Wrong}</div>
+            <div class="wrong-stat-label">AI應用領域</div>
+        </div>
+    `;
+    
+    // 添加篩選器事件監聽器
+    const filterBtns = wrongQuestionsFilter.querySelectorAll('.filter-btn');
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentWrongQuestionsFilter = btn.dataset.filter;
+            renderWrongQuestionsList();
+        });
+    });
+}
+
+// 渲染錯題列表
+function renderWrongQuestionsList() {
+    if (wrongQuestionsHistory.length === 0) {
+        wrongQuestionsList.innerHTML = `
+            <div class="wrong-questions-empty">
+                <div class="wrong-questions-empty-icon">📝</div>
+                <div style="font-size: 1.1rem; margin-bottom: 10px;">目前沒有錯題記錄</div>
+                <div style="color: #a0aec0;">完成測驗後，錯題將會自動記錄在這裡</div>
+            </div>
+        `;
+        return;
+    }
+    
+    let filteredQuestions = [...wrongQuestionsHistory];
+    
+    // 應用篩選
+    switch (currentWrongQuestionsFilter) {
+        case 'category1':
+            filteredQuestions = filteredQuestions.filter(item => item.category === 1);
+            break;
+        case 'category2':
+            filteredQuestions = filteredQuestions.filter(item => item.category === 2);
+            break;
+        case 'recent':
+            filteredQuestions = filteredQuestions
+                .sort((a, b) => b.lastErrorTime - a.lastErrorTime)
+                .slice(0, 10);
+            break;
+        case 'frequent':
+            filteredQuestions = filteredQuestions
+                .sort((a, b) => b.errorCount - a.errorCount)
+                .slice(0, 10);
+            break;
+    }
+    
+    wrongQuestionsList.innerHTML = filteredQuestions.map((item, index) => {
+        const question = item.question;
+        const lastUserAnswer = item.userAnswers[item.userAnswers.length - 1];
+        const userAnswerText = lastUserAnswer !== null ? 
+            question.options[lastUserAnswer] : '未作答';
+        const correctAnswerText = question.options[question.correctAnswer];
+        const categoryName = item.category === 1 ? 
+            'AI發展歷程' : 'AI應用領域';
+        const errorRate = Math.round((item.errorCount / (item.errorCount + 1)) * 100);
+        
+        return `
+            <div class="wrong-question-item fade-in" 
+                 style="animation-delay: ${index * 0.05}s"
+                 onclick="jumpToWrongQuestion(${item.originalIndex})">
+                <div class="wrong-question-header">
+                    <div class="wrong-question-id">${question.id}</div>
+                    <div class="wrong-question-meta">
+                        <span class="wrong-question-category">${categoryName}</span>
+                        <span>錯誤 ${item.errorCount} 次</span>
+                        <span>${errorRate}% 錯誤率</span>
+                    </div>
+                </div>
+                <div class="wrong-question-text">${question.text}</div>
+                <div class="wrong-question-answers">
+                    <div class="wrong-user-answer">❌ 您的答案: ${userAnswerText}</div>
+                    <div class="wrong-correct-answer">✅ 正確答案: ${correctAnswerText}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// 跳轉到錯題
+function jumpToWrongQuestion(originalIndex) {
+    hideWrongQuestionsModal();
+    
+    // 確保在正確的模式下
+    if (currentMode === 'exam' && isExamFinished) {
+        // 如果模擬考已完成，跳轉到該題目
+        currentQuestionIndex = originalIndex;
+        safeDisplayQuestion();
+        highlightCurrentQuestion();
+    } else if (currentMode === 'practice') {
+        // 練習模式下直接跳轉
+        currentQuestionIndex = originalIndex;
+        safeDisplayQuestion();
+        highlightCurrentQuestion();
+    } else {
+        showAlert('請先完成當前測驗或切換到練習模式查看錯題詳解', '提示');
+    }
+}
+
+// 匯出錯題
+function exportWrongQuestions() {
+    if (wrongQuestionsHistory.length === 0) {
+        showAlert('目前沒有錯題可以匯出', '提示');
+        return;
+    }
+    
+    const content = generateWrongQuestionsExportContent();
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `TQC_AI_錯題本_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showAlert('錯題本已成功匯出！', '匯出成功');
+}
+
+// 生成錯題匯出內容
+function generateWrongQuestionsExportContent() {
+    let content = `TQC 人工智慧應用與技術 - 智慧錯題本\n`;
+    content += `匯出時間: ${new Date().toLocaleString()}\n`;
+    content += `總錯題數: ${wrongQuestionsHistory.length}\n`;
+    content += `總錯誤次數: ${wrongQuestionsHistory.reduce((sum, item) => sum + item.errorCount, 0)}\n\n`;
+    content += `========================================\n\n`;
+    
+    wrongQuestionsHistory.forEach((item, index) => {
+        const question = item.question;
+        const lastUserAnswer = item.userAnswers[item.userAnswers.length - 1];
+        const userAnswerText = lastUserAnswer !== null ? 
+            question.options[lastUserAnswer] : '未作答';
+        const correctAnswerText = question.options[question.correctAnswer];
+        const categoryName = item.category === 1 ? 
+            'AI發展歷程與生態系' : 'AI應用領域與產業發展';
+        
+        content += `錯題 ${index + 1}: ${question.id}\n`;
+        content += `所屬類別: ${categoryName}\n`;
+        content += `錯誤次數: ${item.errorCount}\n`;
+        content += `最近錯誤時間: ${new Date(item.lastErrorTime).toLocaleString()}\n\n`;
+        content += `題目:\n${question.text}\n\n`;
+        content += `選項:\n`;
+        question.options.forEach((option, optIndex) => {
+            content += `${option}\n`;
+        });
+        content += `\n`;
+        content += `您的答案: ${userAnswerText}\n`;
+        content += `正確答案: ${correctAnswerText}\n`;
+        content += `詳解: ${question.explanation}\n`;
+        content += `\n${'='.repeat(40)}\n\n`;
+    });
+    
+    content += `\n祝您學習進步！`;
+    
+    return content;
+}
+
+// 開始錯題專項練習
+function startWrongQuestionsTraining() {
+    if (wrongQuestionsHistory.length === 0) {
+        showAlert('目前沒有錯題可以練習', '提示');
+        return;
+    }
+    
+    const trainingQuestions = wrongQuestionsHistory.map(item => ({
+        question: item.question,
+        originalIndex: item.originalIndex,
+        errorCount: item.errorCount
+    }));
+    
+    showConfirm(
+        `開始錯題專項練習嗎？\n\n將練習 ${trainingQuestions.length} 道錯題，專注於加強薄弱環節。`,
+        '錯題專項練習',
+        () => {
+            hideWrongQuestionsModal();
+            
+            // 切換到練習模式（如果當前不是）
+            if (currentMode !== 'practice') {
+                switchMode('practice');
+            }
+            
+            // 設置專項練習模式
+            wrongQuestionsTrainingMode = true;
+            wrongQuestionsTrainingIndex = 0;
+            
+            // 創建專項練習題目列表（隨機順序）
+            const shuffledQuestions = [...trainingQuestions].sort(() => Math.random() - 0.5);
+            
+            // 顯示練習資訊
+            showWrongQuestionsTrainingInfo(shuffledQuestions);
+            
+            // 顯示第一題
+            displayWrongQuestionsTrainingQuestion(shuffledQuestions);
+        }
+    );
+}
+
+// 顯示錯題練習資訊
+function showWrongQuestionsTrainingInfo(questions) {
+    const trainingInfo = document.createElement('div');
+    trainingInfo.className = 'wrong-questions-training fade-in';
+    trainingInfo.id = 'wrong-questions-training-info';
+    
+    trainingInfo.innerHTML = `
+        <h4>🎯 錯題專項練習</h4>
+        <div class="wrong-questions-progress">
+            <span>進度: 1/${questions.length}</span>
+            <div class="wrong-questions-progress-bar">
+                <div class="wrong-questions-progress-fill" style="width: ${(1/questions.length)*100}%"></div>
+            </div>
+            <span>${Math.round((1/questions.length)*100)}%</span>
+        </div>
+        <div style="text-align: center; color: #744210;">
+            專注練習 ${questions.length} 道錯題，加強薄弱環節
+        </div>
+    `;
+    
+    // 插入到題目詳情前面
+    const questionDetail = document.querySelector('.question-detail');
+    questionDetail.parentNode.insertBefore(trainingInfo, questionDetail);
+}
+
+// 顯示錯題練習題目
+function displayWrongQuestionsTrainingQuestion(questions) {
+    if (!wrongQuestionsTrainingMode || questions.length === 0) return;
+    
+    const currentTrainingQuestion = questions[wrongQuestionsTrainingIndex];
+    const question = currentTrainingQuestion.question;
+    
+    // 更新題目顯示
+    currentQuestionElement.textContent = `錯題練習 ${wrongQuestionsTrainingIndex + 1}/${questions.length}`;
+    questionTextElement.textContent = question.text;
+    optionsContainer.innerHTML = '';
+    
+    // 生成選項
+    question.options.forEach((option, index) => {
+        const optionElement = document.createElement('div');
+        optionElement.className = 'option fade-in';
+        optionElement.style.animationDelay = `${index * 0.05}s`;
+        optionElement.textContent = option;
+        
+        optionElement.addEventListener('click', () => {
+            handleWrongQuestionsTrainingAnswer(index, question, questions);
+        });
+        
+        optionsContainer.appendChild(optionElement);
+    });
+    
+    // 更新練習進度
+    updateWrongQuestionsTrainingProgress(questions);
+    
+    // 隱藏反饋（等待用戶回答）
+    feedbackElement.style.display = 'none';
+}
+
+// 處理錯題練習答案
+function handleWrongQuestionsTrainingAnswer(selectedIndex, question, questions) {
+    // 禁用所有選項
+    document.querySelectorAll('.option').forEach(opt => {
+        opt.style.pointerEvents = 'none';
+    });
+    
+    // 顯示正確/錯誤狀態
+    const options = document.querySelectorAll('.option');
+    options.forEach((option, index) => {
+        if (index === question.correctAnswer) {
+            option.classList.add('correct');
+        } else if (index === selectedIndex && index !== question.correctAnswer) {
+            option.classList.add('incorrect');
+        }
+    });
+    
+    // 顯示詳解
+    feedbackElement.textContent = `詳解：${question.explanation}`;
+    feedbackElement.className = selectedIndex === question.correctAnswer ? 
+        'feedback correct' : 'feedback incorrect';
+    feedbackElement.style.display = 'block';
+    
+    // 更新錯題記錄（如果再次答錯）
+    if (selectedIndex !== question.correctAnswer) {
+        updateWrongQuestionRecord(question.id, selectedIndex);
+    }
+    
+    // 自動前往下一題或結束練習
+    setTimeout(() => {
+        if (wrongQuestionsTrainingIndex < questions.length - 1) {
+            wrongQuestionsTrainingIndex++;
+            displayWrongQuestionsTrainingQuestion(questions);
+        } else {
+            finishWrongQuestionsTraining();
+        }
+    }, 3000);
+}
+
+// 更新錯題記錄
+function updateWrongQuestionRecord(questionId, userAnswer) {
+    const record = wrongQuestionsHistory.find(item => item.questionId === questionId);
+    if (record) {
+        record.errorCount++;
+        record.lastErrorTime = Date.now();
+        record.userAnswers.push(userAnswer);
+        saveWrongQuestionsHistory();
+    }
+}
+
+// 更新錯題練習進度
+function updateWrongQuestionsTrainingProgress(questions) {
+    const trainingInfo = document.getElementById('wrong-questions-training-info');
+    if (trainingInfo) {
+        const progress = trainingInfo.querySelector('.wrong-questions-progress');
+        const progressFill = trainingInfo.querySelector('.wrong-questions-progress-fill');
+        
+        const currentProgress = wrongQuestionsTrainingIndex + 1;
+        const totalQuestions = questions.length;
+        const progressPercentage = (currentProgress / totalQuestions) * 100;
+        
+        progress.innerHTML = `
+            <span>進度: ${currentProgress}/${totalQuestions}</span>
+            <div class="wrong-questions-progress-bar">
+                <div class="wrong-questions-progress-fill" style="width: ${progressPercentage}%"></div>
+            </div>
+            <span>${Math.round(progressPercentage)}%</span>
+        `;
+    }
+}
+
+// 結束錯題練習
+function finishWrongQuestionsTraining() {
+    wrongQuestionsTrainingMode = false;
+    
+    // 移除練習資訊
+    const trainingInfo = document.getElementById('wrong-questions-training-info');
+    if (trainingInfo) {
+        trainingInfo.remove();
+    }
+    
+    showAlert(
+        '🎉 錯題專項練習完成！\n\n您已經完成了所有錯題的複習練習。',
+        '練習完成',
+        () => {
+            // 返回正常模式
+            safeDisplayQuestion();
+        }
+    );
+}
 
 // 顯示學習分析報告
 function showAnalysisReport() {
@@ -1403,6 +1883,8 @@ function startCustomQuiz() {
 
 // 在頁面載入時初始化功能按鈕
 document.addEventListener('DOMContentLoaded', () => {
+    loadWrongQuestionsHistory();
+    loadWrongQuestionsHistory(); // 新增這行
     // 確保功能按鈕在容器內
     const container = document.querySelector('.container');
     const featureButtons = document.querySelector('.feature-buttons');
@@ -2228,6 +2710,7 @@ function performExamSubmission() {
         debouncedUpdateQuestionStatus();
         
         // 顯示考試結果（這裡會調用 showOnlyWrongQuestions）
+        updateWrongQuestionsHistory();
         showExamResult();
         saveProgress();
     } catch (error) {
@@ -2788,6 +3271,7 @@ function submitAnswer() {
     });
     
     // 顯示結果
+    updateWrongQuestionsHistory();
     showResultPanel(score, wrongAnswers);
     debouncedUpdateQuestionStatus();
     updateProgressAndScore();

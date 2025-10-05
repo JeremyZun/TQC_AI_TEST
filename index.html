@@ -104,6 +104,53 @@
     </div>
 </div>
 
+<!-- 智慧錯題本模態框 -->
+<div class="modal" id="wrong-questions-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📚 智慧錯題本</h2>
+            <span class="close" id="close-wrong-questions">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="wrong-questions-panel">
+                <h3>🎯 錯題分析與複習</h3>
+                
+                <!-- 統計資訊 -->
+                <div class="wrong-questions-stats" id="wrong-questions-stats">
+                    <!-- 統計數據將由JS生成 -->
+                </div>
+                
+                <!-- 篩選器 -->
+                <div class="wrong-questions-filter" id="wrong-questions-filter">
+                    <button class="filter-btn active" data-filter="all">全部錯題</button>
+                    <button class="filter-btn" data-filter="category1">AI發展歷程</button>
+                    <button class="filter-btn" data-filter="category2">AI應用領域</button>
+                    <button class="filter-btn" data-filter="recent">最近錯誤</button>
+                    <button class="filter-btn" data-filter="frequent">頻繁錯誤</button>
+                </div>
+                
+                <!-- 錯題列表 -->
+                <div class="wrong-questions-list" id="wrong-questions-list">
+                    <!-- 錯題列表將由JS生成 -->
+                </div>
+                
+                <!-- 操作按鈕 -->
+                <div class="wrong-questions-actions">
+                    <button class="wrong-questions-btn secondary" id="export-wrong-questions">
+                        📥 匯出錯題
+                    </button>
+                    <button class="wrong-questions-btn primary" id="start-wrong-questions-training">
+                        🎯 專項練習
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" id="close-wrong-questions-btn">關閉</button>
+        </div>
+    </div>
+</div>
+
 <!-- 新增功能按鈕區域 -->
 <div class="feature-buttons">
     <button class="feature-btn" id="analysis-btn">
@@ -111,6 +158,9 @@
     </button>
     <button class="feature-btn" id="custom-quiz-btn">
         🎯 自定義測驗
+    </button>
+    <button class="feature-btn" id="wrong-questions-btn">
+        📚 智慧錯題本
     </button>
 </div>
 
