@@ -17,6 +17,7 @@
         </div>
     </div>
 </div>
+<body class="mode-not-selected"></body>
 <body>
     <div class="container">
         <header>
@@ -69,6 +70,28 @@
                     </div>
                 </div>
 
+                <div class="weakness-panel" id="weakness-panel" style="display: none;">
+                    <h3>弱點分析</h3>
+                    <div class="weakness-summary">
+                        <div class="weakness-stats">
+                            <div class="weakness-stat">
+                                <span class="stat-value" id="weakness-count">0</span>
+                                <span class="stat-label">弱點領域</span>
+                            </div>
+                            <div class="weakness-stat">
+                                <span class="stat-value" id="improvement-percent">0%</span>
+                                <span class="stat-label">需改進</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="weakness-categories" id="weakness-categories">
+                        <!-- 弱點分類將由JS生成 -->
+                    </div>
+                    <button class="weakness-training-btn" id="weakness-training-btn">
+                        🎯 開始弱點訓練
+                    </button>
+                </div>
+
                 <div class="result-panel" id="result-panel" style="display: none;">
                 <h3>測驗結果</h3>
                 <div id="result-content"></div>
@@ -96,6 +119,10 @@
                     <button class="prev-btn" id="prev-btn">上一題</button>
                     <button class="next-btn" id="next-btn">下一題</button>
                     <button class="submit-btn" id="submit-btn" disabled>提交答案</button>
+                    <!-- 新增弱點訓練按鈕 -->
+                    <button class="weakness-mode-btn" id="weakness-mode-btn" style="display: none;">
+                        🎯 弱點訓練模式
+                    </button>
                     <!-- 模擬考專用提交按鈕 -->
                     <button class="exam-submit-btn" id="exam-submit-btn" style="display: none;">提前交卷</button>
                 </div>

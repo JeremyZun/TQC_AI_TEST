@@ -208,6 +208,60 @@ h1 {
     min-width: 100%;
 }
 
+/* 添加禁用狀態的樣式 */
+.question-detail.disabled,
+.question-list.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* 模式按鈕的初始狀態 */
+.mode-btn:not(.active) {
+    background: white;
+    color: #4299e1;
+    border: 2px solid #4299e1;
+}
+
+.mode-btn.active {
+    background: #4299e1;
+    color: white;
+}
+
+/* 強調模式選擇器的樣式 */
+.mode-selector {
+    display: flex;
+    justify-content: center;
+    margin: 25px 0 15px;
+    gap: 15px;
+    position: relative;
+}
+
+/* 添加提示動畫 */
+.mode-selector::before {
+    content: "⚠️ 請先選擇模式";
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff3cd;
+    color: #856404;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    border: 1px solid #ffeaa7;
+    display: none;
+}
+
+body:not(.mode-selected) .mode-selector::before {
+    display: block;
+    animation: pulse 2s infinite;
+}
+
+/* 添加 body 類別來控制提示顯示 */
+body.mode-selected .mode-selector::before {
+    display: none;
+}
+
 .question-detail:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
@@ -643,6 +697,205 @@ button:disabled {
     background: #cbd5e0;
 }
 
+.weakness-panel {
+    background: #fff5f5;
+    border: 2px solid #fed7d7;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.weakness-panel h3 {
+    color: #742a2a;
+    margin-bottom: 15px;
+    text-align: center;
+    font-size: 1.2rem;
+}
+
+.weakness-summary {
+    margin-bottom: 20px;
+}
+
+.weakness-stats {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+}
+
+.weakness-stat {
+    padding: 10px;
+}
+
+.weakness-stat .stat-value {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #e53e3e;
+}
+
+.weakness-stat .stat-label {
+    font-size: 0.9rem;
+    color: #742a2a;
+}
+
+.weakness-categories {
+    margin-bottom: 20px;
+}
+
+.weakness-category {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-left: 4px solid #e53e3e;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.weakness-category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.weakness-category-name {
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.weakness-category-stats {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+}
+
+.weakness-score {
+    color: #e53e3e;
+    font-weight: 600;
+}
+
+.weakness-progress {
+    height: 6px;
+    background: #fed7d7;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.weakness-progress-fill {
+    height: 100%;
+    background: #e53e3e;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.weakness-training-btn {
+    width: 100%;
+    padding: 12px;
+    background: #e53e3e;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.weakness-training-btn:hover {
+    background: #c53030;
+    transform: translateY(-1px);
+}
+
+.weakness-mode-btn {
+    background: #ed8936 !important;
+    color: white;
+}
+
+.weakness-mode-btn:hover:not(:disabled) {
+    background: #dd771c !important;
+}
+
+/* 弱點訓練模式專用樣式 */
+.weakness-training-info {
+    background: #fffaf0;
+    border: 2px solid #fed7aa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.weakness-training-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+
+.weakness-training-stat {
+    text-align: center;
+}
+
+.weakness-training-stat .value {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #ed8936;
+}
+
+.weakness-training-stat .label {
+    font-size: 0.8rem;
+    color: #744210;
+}
+
+/* 弱點題目標記 */
+.question-item.weakness {
+    border: 2px solid #e53e3e;
+    background: #fff5f5;
+}
+
+.question-item.weakness.active {
+    background: #e53e3e;
+    color: white;
+}
+
+/* 錯誤題目摘要樣式 */
+.wrong-answer-summary {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+}
+
+.wrong-answer-summary:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 錯誤題目標記 */
+.question-item.incorrect {
+    background: #fed7d7;
+    border-color: #f56565;
+    color: #742a2a;
+    font-weight: 600;
+}
+
+/* 當前查看的錯誤題目 */
+.question-item.incorrect.active {
+    background: #f56565;
+    border-color: #f56565;
+    color: white;
+    animation: pulse 2s infinite;
+}
+
+/* 模擬考結果中的錯誤題目列表 */
+.wrong-answer-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 15px 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 10px;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -736,6 +989,27 @@ button:disabled {
     
     .stats-grid {
         grid-template-columns: 1fr;
+    }
+
+        .weakness-stats {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .weakness-category-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .weakness-category-stats {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .weakness-training-stats {
+        flex-direction: column;
+        gap: 10px;
     }
 }
 
