@@ -1630,7 +1630,8 @@ button:disabled {
 
     .modal-content {
         width: 95%;
-        margin: 20px;
+        margin: 10px;
+        max-height: 85vh;
     }
     
     .modal-header {
@@ -1638,7 +1639,29 @@ button:disabled {
     }
     
     .modal-body {
-        padding: 20px;
+        padding: 15px;
+        max-height: 60vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch; /* iOS 平滑滾動 */
+    }
+
+    .wrong-questions-panel {
+        padding: 15px;
+        margin-top: 15px;
+    }
+    
+    .wrong-questions-list {
+        max-height: 50vh;
+    }
+    
+    .wrong-question-item {
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .wrong-question-text {
+        font-size: 0.9rem;
+        line-height: 1.4;
     }
     
     .modal-footer {
