@@ -1036,6 +1036,15 @@ const previewQuizBtn = document.getElementById('preview-quiz');
 const startCustomQuizBtn = document.getElementById('start-custom-quiz');
 const previewContent = document.getElementById('preview-content');
 
+const leaderboardBtn = document.getElementById('leaderboard-btn');
+const leaderboardModal = document.getElementById('leaderboard-modal');
+const closeLeaderboard = document.getElementById('close-leaderboard');
+const closeLeaderboardBtn = document.getElementById('close-leaderboard-btn');
+const leaderboardList = document.getElementById('leaderboard-list');
+const leaderboardSort = document.getElementById('leaderboard-sort');
+const leaderboardFilter = document.getElementById('leaderboard-filter');
+const refreshLeaderboardBtn = document.getElementById('refresh-leaderboard');
+
 // 事件監聽器
 analysisBtn.addEventListener('click', showAnalysisReport);
 customQuizBtn.addEventListener('click', showCustomQuizModal);
@@ -1045,6 +1054,13 @@ closeCustomQuiz.addEventListener('click', hideCustomQuizModal);
 previewQuizBtn.addEventListener('click', updateQuizPreview);
 startCustomQuizBtn.addEventListener('click', startCustomQuiz);
 exportAnalysisBtn.addEventListener('click', exportAnalysisReport);
+
+leaderboardBtn.addEventListener('click', showLeaderboard);
+closeLeaderboard.addEventListener('click', hideLeaderboardModal);
+closeLeaderboardBtn.addEventListener('click', hideLeaderboardModal);
+leaderboardSort.addEventListener('change', updateLeaderboard);
+leaderboardFilter.addEventListener('change', updateLeaderboard);
+refreshLeaderboardBtn.addEventListener('click', updateLeaderboard);
 
 // 在事件監聽器區域新增
 weaknessTrainingBtn.addEventListener('click', startWeaknessTraining);
@@ -1062,6 +1078,7 @@ document.addEventListener('keydown', handleKeyboardShortcuts);
 
 // 點擊模態框外部關閉
 window.addEventListener('click', (e) => {
+    if (e.target === leaderboardModal) hideLeaderboardModal();
     if (e.target === analysisModal) hideAnalysisModal();
     if (e.target === customQuizModal) hideCustomQuizModal();
 });
@@ -1399,6 +1416,204 @@ function startCustomQuiz() {
         `祝您考試順利！`,
         '測驗開始'
     );
+}
+
+// 顯示排行榜模態框
+function showLeaderboard() {
+    updateLeaderboard();
+    leaderboardModal.classList.add('show');
+}
+
+// 隱藏排行榜模態框
+function hideLeaderboardModal() {
+    leaderboardModal.classList.remove('show');
+}
+
+// 更新排行榜
+function updateLeaderboard() {
+    const leaderboardData = getLeaderboardData();
+    const sortBy = leaderboardSort.value;
+    const filterBy = leaderboardFilter.value;
+    
+    // 根據篩選條件過濾數據
+    let filteredData = filterLeaderboardData(leaderboardData, filterBy);
+    
+    // 根據排序方式排序
+    filteredData = sortLeaderboardData(filteredData, sortBy);
+    
+    // 生成排行榜HTML
+    generateLeaderboardHTML(filteredData);
+}
+
+// 獲取排行榜數據
+function getLeaderboardData() {
+    // 嘗試從localStorage獲取數據
+    let leaderboardData = [];
+    try {
+        const savedData = localStorage.getItem('tqc-ai-leaderboard');
+        if (savedData) {
+            leaderboardData = JSON.parse(savedData);
+        }
+    } catch (error) {
+        console.warn('無法讀取排行榜數據:', error);
+    }
+    
+    // 如果沒有數據或數據為空，生成示例數據
+    if (leaderboardData.length === 0) {
+        leaderboardData = generateSampleLeaderboardData();
+        saveLeaderboardData(leaderboardData);
+    }
+    
+    // 添加當前用戶數據
+    const currentUserData = getCurrentUserData();
+    const currentUserIndex = leaderboardData.findIndex(user => user.id === currentUserData.id);
+    
+    if (currentUserIndex !== -1) {
+        // 更新現有用戶數據
+        leaderboardData[currentUserIndex] = currentUserData;
+    } else {
+        // 添加新用戶數據
+        leaderboardData.push(currentUserData);
+    }
+    
+    // 保存更新後的數據
+    saveLeaderboardData(leaderboardData);
+    
+    return leaderboardData;
+}
+
+// 獲取當前用戶數據
+function getCurrentUserData() {
+    const stats = generateDetailedStatistics();
+    const currentQuestions = currentMode === 'exam' ? examQuestions : questions;
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
+    
+    // 計算總分
+    let totalScore = 0;
+    currentQuestions.forEach((question, index) => {
+        if (currentAnswers[index] === question.correctAnswer) {
+            totalScore += currentMode === 'exam' ? 2 : 1;
+        }
+    });
+    
+    // 計算學習進度
+    const answeredCount = currentAnswers.filter(answer => answer !== null).length;
+    const progressPercentage = Math.round((answeredCount / currentQuestions.length) * 100);
+    
+    return {
+        id: 'current-user',
+        name: '當前用戶',
+        score: totalScore,
+        accuracy: stats.accuracy,
+        progress: progressPercentage,
+        studyTime: stats.studyTime,
+        lastActive: Date.now(),
+        avatar: '你'
+    };
+}
+
+// 生成示例排行榜數據
+function generateSampleLeaderboardData() {
+    const sampleNames = ['AI學習者', '科技愛好者', '程式設計師', '資料科學家', '機器學習工程師', '深度學習專家', '人工智慧研究員', '演算法工程師'];
+    const sampleAvatars = ['AI', '科', '程', '資', '機', '深', '智', '演'];
+    
+    return sampleNames.map((name, index) => {
+        const score = Math.floor(Math.random() * 100) + 50;
+        const accuracy = Math.floor(Math.random() * 30) + 70;
+        const progress = Math.floor(Math.random() * 40) + 60;
+        
+        return {
+            id: `user-${index}`,
+            name: name,
+            score: score,
+            accuracy: accuracy,
+            progress: progress,
+            studyTime: `${Math.floor(Math.random() * 10) + 5}小時`,
+            lastActive: Date.now() - Math.floor(Math.random() * 7) * 24 * 60 * 60 * 1000,
+            avatar: sampleAvatars[index]
+        };
+    });
+}
+
+// 保存排行榜數據
+function saveLeaderboardData(data) {
+    try {
+        localStorage.setItem('tqc-ai-leaderboard', JSON.stringify(data));
+    } catch (error) {
+        console.warn('無法保存排行榜數據:', error);
+    }
+}
+
+// 篩選排行榜數據
+function filterLeaderboardData(data, filter) {
+    const now = Date.now();
+    const oneDay = 24 * 60 * 60 * 1000;
+    const oneWeek = 7 * oneDay;
+    
+    switch (filter) {
+        case 'today':
+            return data.filter(user => now - user.lastActive < oneDay);
+        case 'week':
+            return data.filter(user => now - user.lastActive < oneWeek);
+        default:
+            return data;
+    }
+}
+
+// 排序排行榜數據
+function sortLeaderboardData(data, sortBy) {
+    return [...data].sort((a, b) => {
+        switch (sortBy) {
+            case 'score':
+                return b.score - a.score;
+            case 'accuracy':
+                return b.accuracy - a.accuracy;
+            case 'progress':
+                return b.progress - a.progress;
+            case 'time':
+                // 將學習時間轉換為小時數進行比較
+                const aTime = parseInt(a.studyTime) || 0;
+                const bTime = parseInt(b.studyTime) || 0;
+                return bTime - aTime;
+            default:
+                return b.score - a.score;
+        }
+    });
+}
+
+// 生成排行榜HTML
+function generateLeaderboardHTML(data) {
+    if (data.length === 0) {
+        leaderboardList.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #718096;">
+                <p>暫無數據</p>
+                <p>請完成一些測驗後再查看排行榜</p>
+            </div>
+        `;
+        return;
+    }
+    
+    leaderboardList.innerHTML = data.map((user, index) => {
+        const isCurrentUser = user.id === 'current-user';
+        const rankClass = index < 3 ? `top-3 rank-${index + 1}` : '';
+        
+        return `
+            <div class="leaderboard-item ${isCurrentUser ? 'current-user' : ''} fade-in" 
+                 style="animation-delay: ${index * 0.05}s">
+                <div class="leaderboard-rank ${rankClass}">${index + 1}</div>
+                <div class="leaderboard-avatar">${user.avatar}</div>
+                <div class="leaderboard-user">
+                    <div class="leaderboard-name">${user.name}</div>
+                    <div class="leaderboard-stats">
+                        <span>正確率: ${user.accuracy}%</span>
+                        <span>進度: ${user.progress}%</span>
+                        <span>學習時間: ${user.studyTime}</span>
+                    </div>
+                </div>
+                <div class="leaderboard-score">${user.score}分</div>
+            </div>
+        `;
+    }).join('');
 }
 
 // 在頁面載入時初始化功能按鈕
