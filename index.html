@@ -6,15 +6,44 @@
     <title>TQC人工智慧應用與技術測驗</title>
     <link rel="stylesheet" href="style.css">
 </head>
+<!-- 自定義提示框 -->
+<div class="custom-alert" id="custom-alert">
+    <div class="alert-content">
+        <div class="alert-title" id="alert-title">提示</div>
+        <div class="alert-message" id="alert-message"></div>
+        <div class="alert-buttons">
+            <button class="alert-btn confirm" id="alert-confirm">確定</button>
+            <button class="alert-btn cancel" id="alert-cancel" style="display: none;">取消</button>
+        </div>
+    </div>
+</div>
 <body>
     <div class="container">
         <header>
             <h1>TQC 人工智慧應用與技術-實用級</h1>
             <p class="subtitle">測驗系統 - 請選擇答案並提交以查看結果</p>
+            
+            <!-- 新增模式選擇按鈕 -->
+            <div class="mode-selector">
+                <button class="mode-btn active" id="practice-mode">練習模式</button>
+                <button class="mode-btn" id="exam-mode">模擬考模式</button>
+            </div>
         </header>
         
+        <!-- 模擬考專用計時器 -->
+        <div class="exam-timer" id="exam-timer" style="display: none;">
+            <div class="timer-display">
+                <span>剩餘時間：</span>
+                <span id="time-display">40:00</span>
+            </div>
+            <div class="exam-info">
+                <span>題數：<span id="exam-question-count">50</span>題</span>
+                <span>目標分數：70分</span>
+            </div>
+        </div>
+        
         <div class="main-content">
-            <div class="question-list">
+            <div class="question-list" id="question-list">
                 <h2>題目列表</h2>
                 
                 <div class="question-categories">
@@ -29,15 +58,21 @@
                     </div>
                 </div>
                 
-                <div class="score-panel">
-                    <div>答題進度: <span id="progress">0/72</span></div>
-                    <div>得分: <span id="score">0</span> 分</div>
+                <!-- 新增進度條 -->
+                <div class="progress-container">
+                    <div class="progress-label">
+                        <span>答題進度: <span id="progress">0/72</span></span>
+                        <span>得分: <span id="score">0</span> 分</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                    </div>
                 </div>
 
                 <div class="result-panel" id="result-panel" style="display: none;">
-                  <h3>測驗結果</h3>
-                  <div id="result-content"></div>
-              </div>
+                <h3>測驗結果</h3>
+                <div id="result-content"></div>
+                </div>
             </div>
             
             <div class="question-detail">
@@ -61,6 +96,8 @@
                     <button class="prev-btn" id="prev-btn">上一題</button>
                     <button class="next-btn" id="next-btn">下一題</button>
                     <button class="submit-btn" id="submit-btn" disabled>提交答案</button>
+                    <!-- 模擬考專用提交按鈕 -->
+                    <button class="exam-submit-btn" id="exam-submit-btn" style="display: none;">提前交卷</button>
                 </div>
             </div>
         </div>

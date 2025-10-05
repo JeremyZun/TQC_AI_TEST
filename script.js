@@ -939,12 +939,35 @@ const questions = [
         explanation: "「平等醫療」旨在解決因社會經濟不平等而導致的醫療資源不均問題。人工智慧可以在這個概念下扮演對病人進行初步診斷的角色。透過 AI 進行初步診斷，可以讓醫療資源更公平地分配，使貧窮地區的人也能獲得基本的醫療協助。"
     }
 ];
-
-// 初始化變數
-let currentQuestionIndex = 0;
-let userAnswers = new Array(questions.length).fill(null);
-let score = 0;
+// 優化的初始化變數
+let currentMode = 'practice'; // 'practice' 或 'exam'
+let examQuestions = [];
+let examTimeLeft = 40 * 60; // 40分鐘，以秒為單位
+let examTimer = null;
+let isExamStarted = false;
 let isExamFinished = false;
+let currentQuestionIndex = 0;
+let userAnswers = [];
+let score = 0;
+
+// 新增：緩存 DOM 查詢結果
+const domCache = {
+    questionItems: null,
+    options: null
+};
+
+// 新增：防抖函數用於頻繁操作
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
 
 // DOM 元素
 const category1Element = document.getElementById('category1');
@@ -958,6 +981,439 @@ const nextBtn = document.getElementById('next-btn');
 const submitBtn = document.getElementById('submit-btn');
 const progressElement = document.getElementById('progress');
 const scoreElement = document.getElementById('score');
+const practiceModeBtn = document.getElementById('practice-mode');
+const examModeBtn = document.getElementById('exam-mode');
+const examTimerElement = document.getElementById('exam-timer');
+const timeDisplayElement = document.getElementById('time-display');
+const examQuestionCountElement = document.getElementById('exam-question-count');
+const examSubmitBtn = document.getElementById('exam-submit-btn');
+const progressFillElement = document.getElementById('progress-fill');
+const questionListElement = document.getElementById('question-list');
+// 自定義提示框元素
+const customAlert = document.getElementById('custom-alert');
+const alertTitle = document.getElementById('alert-title');
+const alertMessage = document.getElementById('alert-message');
+const alertConfirm = document.getElementById('alert-confirm');
+const alertCancel = document.getElementById('alert-cancel');
+
+// 模式切換功能
+practiceModeBtn.addEventListener('click', () => switchMode('practice'));
+examModeBtn.addEventListener('click', () => switchMode('exam'));
+
+// 模擬考提交按鈕事件
+examSubmitBtn.addEventListener('click', submitExam);
+
+// 新增：鍵盤快捷鍵支持
+document.addEventListener('keydown', handleKeyboardShortcuts);
+
+// 初始化時嘗試載入進度
+window.addEventListener('load', () => {
+    const savedProgress = loadProgress();
+    if (savedProgress) {
+        applySavedProgress(savedProgress);
+    } else {
+        initializeQuestionList();
+        displayQuestion();
+    }
+});
+
+// 自定義提示框函數
+function showAlert(message, title = '提示', confirmCallback = null, cancelCallback = null) {
+    alertTitle.textContent = title;
+    alertMessage.textContent = message;
+    
+    // 重置按鈕狀態
+    alertCancel.style.display = cancelCallback ? 'inline-block' : 'none';
+    
+    // 移除舊的事件監聽器
+    const newConfirmBtn = alertConfirm.cloneNode(true);
+    const newCancelBtn = alertCancel.cloneNode(true);
+    
+    alertConfirm.parentNode.replaceChild(newConfirmBtn, alertConfirm);
+    alertCancel.parentNode.replaceChild(newCancelBtn, alertCancel);
+    
+    // 更新引用
+    const confirmBtn = newConfirmBtn;
+    const cancelBtn = newCancelBtn;
+    
+    // 確認按鈕事件
+    confirmBtn.onclick = () => {
+        hideAlert();
+        if (confirmCallback) confirmCallback();
+    };
+    
+    // 取消按鈕事件
+    cancelBtn.onclick = () => {
+        hideAlert();
+        if (cancelCallback) cancelCallback();
+    };
+    
+    // 顯示提示框
+    customAlert.classList.add('show');
+    
+    // 點擊背景關閉（如果只有確認按鈕）
+    if (!cancelCallback) {
+        customAlert.onclick = (e) => {
+            if (e.target === customAlert) {
+                hideAlert();
+                if (confirmCallback) confirmCallback();
+            }
+        };
+    }
+}
+
+function hideAlert() {
+    customAlert.classList.remove('show');
+    customAlert.onclick = null;
+}
+
+// 確認對話框函數
+function showConfirm(message, title = '確認', confirmCallback = null, cancelCallback = null) {
+    showAlert(message, title, confirmCallback, cancelCallback);
+}
+
+// 切換模式函數
+function switchMode(mode) {
+    if (currentMode === mode) return;
+    
+    currentMode = mode;
+    
+    // 更新按鈕狀態
+    practiceModeBtn.classList.toggle('active', mode === 'practice');
+    examModeBtn.classList.toggle('active', mode === 'exam');
+    
+    // 顯示/隱藏模擬考元素
+    examTimerElement.style.display = mode === 'exam' ? 'block' : 'none';
+    examSubmitBtn.style.display = mode === 'exam' ? 'inline-block' : 'none';
+    submitBtn.style.display = mode === 'exam' ? 'none' : 'inline-block';
+    
+    // 顯示/隱藏題目列表
+    questionListElement.style.display = mode === 'exam' ? 'none' : 'block';
+    
+    if (mode === 'exam') {
+        initializeExam();
+    } else {
+        resetToPracticeMode();
+    }
+    
+    saveProgress();
+}
+
+// 初始化模擬考
+function initializeExam() {
+    // 重置狀態
+    isExamStarted = true;
+    isExamFinished = false;
+    examTimeLeft = 40 * 60;
+    userAnswers = new Array(50).fill(null);
+    score = 0;
+    currentQuestionIndex = 0;
+    
+    // 隱藏題目列表
+    questionListElement.style.display = 'none';
+    
+    // 隨機選擇50題
+    examQuestions = getRandomQuestions(50);
+    
+    // 更新題目計數顯示
+    examQuestionCountElement.textContent = examQuestions.length;
+    
+    // 更新題目列表（雖然隱藏，但需要初始化）
+    initializeExamQuestionList();
+    
+    // 開始計時器
+    startExamTimer();
+    
+    // 顯示第一題
+    safeDisplayQuestion();
+    
+    // 重置結果面板
+    document.getElementById('result-panel').style.display = 'none';
+    
+    saveProgress();
+}
+
+// 從所有題目中隨機選擇指定數量的題目
+function getRandomQuestions(count) {
+    const shuffled = [...questions].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+}
+
+// 初始化模擬考題目列表
+function initializeExamQuestionList() {
+    category1Element.innerHTML = '';
+    category2Element.innerHTML = '';
+    
+    examQuestions.forEach((question, index) => {
+        const questionItem = createQuestionItem(question, index);
+        
+        // 根據類別添加到對應容器
+        if (question.category === 1) {
+            category1Element.appendChild(questionItem);
+        } else {
+            category2Element.appendChild(questionItem);
+        }
+    });
+    
+    // 更新緩存
+    domCache.questionItems = document.querySelectorAll('.question-item');
+}
+
+// 創建題目項目
+function createQuestionItem(question, index) {
+    const questionItem = document.createElement('div');
+    questionItem.className = 'question-item';
+    
+    // 修正題號顯示邏輯
+    if (currentMode === 'exam') {
+        questionItem.textContent = index + 1; // 從1開始顯示
+    } else {
+        questionItem.textContent = question.id;
+    }
+    
+    questionItem.dataset.index = index;
+    
+    // ARIA 標籤
+    questionItem.setAttribute('role', 'button');
+    questionItem.setAttribute('aria-label', `題目 ${currentMode === 'exam' ? index + 1 : question.id}`);
+    questionItem.setAttribute('tabindex', '0');
+    
+    questionItem.addEventListener('click', () => {
+        if ((currentMode === 'exam' && !isExamStarted) || isExamFinished) return;
+        
+        currentQuestionIndex = index;
+        safeDisplayQuestion();
+        saveProgress();
+    });
+    
+    return questionItem;
+}
+
+// 開始模擬考計時器
+function startExamTimer() {
+    updateTimerDisplay();
+    
+    if (examTimer) {
+        clearInterval(examTimer);
+    }
+    
+    examTimer = setInterval(() => {
+        examTimeLeft--;
+        updateTimerDisplay();
+        
+        if (examTimeLeft <= 0) {
+            clearInterval(examTimer);
+            autoSubmitExam();
+        }
+        
+        // 每30秒自動保存一次
+        if (examTimeLeft % 30 === 0) {
+            saveProgress();
+        }
+    }, 1000);
+}
+
+// 更新計時器顯示
+function updateTimerDisplay() {
+    const minutes = Math.floor(examTimeLeft / 60);
+    const seconds = examTimeLeft % 60;
+    timeDisplayElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    // 時間不足時添加警告樣式
+    if (examTimeLeft <= 300) { // 5分鐘
+        timeDisplayElement.classList.add('timer-warning');
+    } else {
+        timeDisplayElement.classList.remove('timer-warning');
+    }
+}
+
+// 自動交卷（時間到）
+function autoSubmitExam() {
+    isExamFinished = true;
+    clearInterval(examTimer);
+    calculateExamScore();
+    
+    // 重新顯示題目列表以便查看結果和跳轉
+    questionListElement.style.display = 'block';
+    
+    // 更新所有題目狀態
+    debouncedUpdateQuestionStatus();
+    
+    showExamResult();
+    saveProgress();
+}
+
+// 手動提交模擬考
+function submitExam() {
+    showConfirm(
+        '確定要交卷嗎？',
+        '確認交卷',
+        () => {
+            isExamFinished = true;
+            clearInterval(examTimer);
+            calculateExamScore();
+            
+            // 重新顯示題目列表以便查看結果和跳轉
+            questionListElement.style.display = 'block';
+            
+            // 更新所有題目狀態
+            debouncedUpdateQuestionStatus();
+            
+            showExamResult();
+            saveProgress();
+        }
+    );
+}
+
+// 計算模擬考分數
+function calculateExamScore() {
+    score = 0;
+    examQuestions.forEach((question, index) => {
+        if (userAnswers[index] === question.correctAnswer) {
+            score += 2; // 每題2分
+        }
+    });
+}
+
+// 顯示模擬考結果
+function showExamResult() {
+    const isPass = score >= 70;
+    const resultPanel = document.getElementById('result-panel');
+    const resultContent = document.getElementById('result-content');
+    
+    let resultHTML = `
+        <div class="exam-result ${isPass ? 'exam-pass' : 'exam-fail'} fade-in">
+            <h4>${isPass ? '🎉 恭喜合格！' : '❌ 未達合格標準'}</h4>
+            <div class="score">${score} 分</div>
+            <div>合格標準：70分</div>
+            <div>答對題數：${score / 2}/50題</div>
+            <div>${isPass ? '您已通過模擬考測驗！' : '請繼續努力！'}</div>
+        </div>
+    `;
+    
+    // 顯示詳細統計
+    resultHTML += generateStatisticsHTML();
+    
+    // 顯示錯誤題目詳解
+    const wrongAnswers = getWrongAnswers();
+    if (wrongAnswers.length > 0) {
+        resultHTML += `
+            <div style="margin-top: 20px;">
+                <h4>錯誤題目詳解：</h4>
+                <p style="font-size: 0.9em; color: #666; margin-top: 5px;">
+                    💡 點擊錯誤題目可以快速跳轉到該題目查看詳解
+                </p>
+            </div>
+        `;
+        
+        wrongAnswers.forEach((item, index) => {
+            resultHTML += `
+                <div class="wrong-answer-item fade-in" style="animation-delay: ${index * 0.1}s" 
+                     data-question-index="${item.originalIndex}" onclick="jumpToQuestion(${item.originalIndex})">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                        <div style="flex: 1;">
+                            <div><strong>題目 ${item.id}:</strong> ${item.question}</div>
+                            <div style="margin-top: 8px;">
+                                <span class="incorrect-answer">您的答案: ${item.userAnswer}</span>
+                            </div>
+                            <div style="margin-top: 5px;">
+                                <span class="correct-answer">正確答案: ${item.correctAnswer}</span>
+                            </div>
+                        </div>
+                        <div style="margin-left: 10px; color: #4299e1; font-size: 0.8em; white-space: nowrap;">
+                            🔍 點擊查看
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 0.9em; color: #555;">
+                        <strong>解析:</strong> ${item.explanation}
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        resultHTML += `
+            <div style="text-align: center; color: #27ae60; font-weight: bold; margin-top: 20px;" class="fade-in">
+                🎉 恭喜！所有題目都答對了！
+            </div>
+        `;
+    }
+    
+    resultContent.innerHTML = resultHTML;
+    resultPanel.style.display = 'block';
+    
+    // 滾動到結果面板
+    setTimeout(() => {
+        resultPanel.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+}
+
+// 新增跳轉到指定題目的函數
+function jumpToQuestion(questionIndex) {
+    if (questionIndex < 0 || questionIndex >= (currentMode === 'exam' ? examQuestions.length : questions.length)) {
+        return;
+    }
+    
+    // 跳轉到指定題目
+    currentQuestionIndex = questionIndex;
+    safeDisplayQuestion();
+    
+    // 確保題目列表可見（如果之前隱藏的話）
+    if (currentMode === 'exam') {
+        questionListElement.style.display = 'block';
+    }
+    
+    // 高亮顯示當前題目
+    highlightCurrentQuestion();
+    
+    // 滾動到題目詳情區域
+    document.querySelector('.question-detail').scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+    });
+    
+    saveProgress();
+}
+
+// 新增高亮當前題目的函數
+function highlightCurrentQuestion() {
+    const questionItems = document.querySelectorAll('.question-item');
+    questionItems.forEach((item, index) => {
+        if (index === currentQuestionIndex) {
+            item.classList.add('active');
+            // 添加脈衝動畫效果
+            item.style.animation = 'pulse 2s infinite';
+        } else {
+            item.classList.remove('active');
+            item.style.animation = '';
+        }
+    });
+}
+
+// 重置為練習模式
+function resetToPracticeMode() {
+    isExamStarted = false;
+    isExamFinished = false;
+    currentQuestionIndex = 0;
+    userAnswers = new Array(questions.length).fill(null);
+    score = 0;
+    
+    if (examTimer) {
+        clearInterval(examTimer);
+        examTimer = null;
+    }
+    
+    // 確保題目列表顯示
+    questionListElement.style.display = 'block';
+    
+    initializeQuestionList();
+    safeDisplayQuestion();
+    updateProgressAndScore();
+    
+    // 重置結果面板
+    document.getElementById('result-panel').style.display = 'none';
+    
+    saveProgress();
+}
 
 // 初始化題目列表
 function initializeQuestionList() {
@@ -967,16 +1423,7 @@ function initializeQuestionList() {
     
     // 生成題目列表
     questions.forEach((question, index) => {
-        const questionItem = document.createElement('div');
-        questionItem.className = 'question-item';
-        questionItem.textContent = question.id;
-        questionItem.dataset.index = index;
-        
-        // 點擊題目項目時切換到該題目
-        questionItem.addEventListener('click', () => {
-            currentQuestionIndex = index;
-            displayQuestion();
-        });
+        const questionItem = createQuestionItem(question, index);
         
         // 根據類別添加到對應的容器
         if (question.category === 1) {
@@ -985,152 +1432,210 @@ function initializeQuestionList() {
             category2Element.appendChild(questionItem);
         }
     });
+    
+    // 更新緩存
+    domCache.questionItems = document.querySelectorAll('.question-item');
+}
+
+// 安全顯示題目（錯誤處理）
+function safeDisplayQuestion() {
+    try {
+        displayQuestion();
+    } catch (error) {
+        console.error('顯示題目時發生錯誤:', error);
+        questionTextElement.textContent = '題目載入失敗，請重新整理頁面';
+        optionsContainer.innerHTML = '<div class="option">載入失敗，請重新整理</div>';
+        feedbackElement.style.display = 'none';
+    }
 }
 
 // 顯示當前題目
 function displayQuestion() {
-    const question = questions[currentQuestionIndex];
+    const question = currentMode === 'exam' ? examQuestions[currentQuestionIndex] : questions[currentQuestionIndex];
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
     
-    // 更新題目編號和內容
-    currentQuestionElement.textContent = `題目 ${question.id}`;
+    if (!validateQuestionData(question)) {
+        throw new Error('無效的題目資料');
+    }
+    
+    // 添加淡入效果
+    questionTextElement.classList.add('fade-in');
+    
+    // 修正題號顯示邏輯
+    if (currentMode === 'exam') {
+        currentQuestionElement.textContent = `題目 ${currentQuestionIndex + 1}`;
+    } else {
+        currentQuestionElement.textContent = `題目 ${question.id}`;
+    }
+    
     questionTextElement.textContent = question.text;
-    
-    // 清空選項容器
     optionsContainer.innerHTML = '';
     
     // 生成選項
     question.options.forEach((option, index) => {
         const optionElement = document.createElement('div');
-        optionElement.className = 'option';
+        optionElement.className = 'option fade-in';
+        optionElement.style.animationDelay = `${index * 0.05}s`;
         optionElement.textContent = option;
         
-        // 如果用戶已經選擇了這個選項，添加selected類
-        if (userAnswers[currentQuestionIndex] === index) {
+        // ARIA 屬性
+        optionElement.setAttribute('role', 'radio');
+        optionElement.setAttribute('aria-checked', currentAnswers[currentQuestionIndex] === index ? 'true' : 'false');
+        optionElement.setAttribute('tabindex', '0');
+        
+        // 檢查是否已選擇此選項
+        if (currentAnswers[currentQuestionIndex] === index) {
             optionElement.classList.add('selected');
         }
         
-        // 如果測驗已完成，顯示正確/錯誤答案
-        if (isExamFinished) {
+        // 測驗完成後的顯示邏輯
+        if ((currentMode === 'exam' && isExamFinished) || (currentMode === 'practice' && isExamFinished)) {
             if (index === question.correctAnswer) {
                 optionElement.classList.add('correct');
-            } else if (index === userAnswers[currentQuestionIndex] && index !== question.correctAnswer) {
+            } else if (index === currentAnswers[currentQuestionIndex] && index !== question.correctAnswer) {
                 optionElement.classList.add('incorrect');
             }
             optionElement.style.pointerEvents = 'none';
         } else {
-            // 點擊選項（僅在測驗未完成時可用）
+            // 可點擊狀態
             optionElement.addEventListener('click', () => {
-                // 移除其他選項的selected類
-                document.querySelectorAll('.option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
+                if (currentMode === 'exam' && !isExamStarted) return;
+                if (isExamFinished) return;
                 
-                // 添加selected類到當前選項
-                optionElement.classList.add('selected');
-                
-                // 保存用戶答案
-                userAnswers[currentQuestionIndex] = index;
-                
-                // 更新題目列表中的狀態
-                updateQuestionStatus();
-                
-                // 更新進度和提交按鈕狀態
-                updateProgressAndScore();
+                selectOption(index);
+            });
+            
+            // 鍵盤支持
+            optionElement.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    if (currentMode === 'exam' && !isExamStarted) return;
+                    if (isExamFinished) return;
+                    
+                    selectOption(index);
+                }
             });
         }
         
         optionsContainer.appendChild(optionElement);
     });
     
-    // 如果測驗已完成且當前題目答錯，顯示反饋
-    if (isExamFinished && userAnswers[currentQuestionIndex] !== question.correctAnswer) {
-        feedbackElement.textContent = `正確答案是：${question.options[question.correctAnswer]}。${question.explanation}`;
-        feedbackElement.className = 'feedback incorrect';
-        feedbackElement.style.display = 'block';
-    } else {
-        // 隱藏反饋
-        feedbackElement.style.display = 'none';
+    // 更新緩存
+    domCache.options = document.querySelectorAll('.option');
+    
+    // 更新反饋訊息 - 在模擬考結束後顯示詳解
+    updateFeedback(question);
+    
+    // 更新各種狀態
+    updateNavigationButtons();
+    debouncedUpdateQuestionStatus();
+    updateProgressAndScore();
+    
+    // 高亮當前題目
+    if (isExamFinished) {
+        highlightCurrentQuestion();
     }
     
-    // 更新導航按鈕狀態
-    updateNavigationButtons();
-    
-    // 更新題目列表中的當前題目
-    updateCurrentQuestionInList();
-    
-    // 更新進度和分數
-    updateProgressAndScore();
+    // 移除淡入效果（為下一次做準備）
+    setTimeout(() => {
+        questionTextElement.classList.remove('fade-in');
+    }, 300);
 }
 
-// 更新題目列表中的狀態
-function updateQuestionStatus() {
-    const questionItems = document.querySelectorAll('.question-item');
+// 資料驗證
+function validateQuestionData(question) {
+    if (!question || typeof question !== 'object') return false;
+    if (!Array.isArray(question.options) || question.options.length === 0) return false;
+    if (typeof question.correctAnswer !== 'number') return false;
+    if (question.correctAnswer < 0 || question.correctAnswer >= question.options.length) return false;
+    return true;
+}
+
+// 選擇選項
+function selectOption(optionIndex) {
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
     
-    questions.forEach((question, index) => {
-        const questionItem = questionItems[index];
+    // 移除其他選項的選中狀態
+    document.querySelectorAll('.option').forEach(opt => {
+        opt.classList.remove('selected');
+        opt.setAttribute('aria-checked', 'false');
+    });
+    
+    // 設置當前選項為選中狀態
+    currentAnswers[currentQuestionIndex] = optionIndex;
+    const selectedOption = document.querySelectorAll('.option')[optionIndex];
+    if (selectedOption) {
+        selectedOption.classList.add('selected');
+        selectedOption.setAttribute('aria-checked', 'true');
+    }
+    
+    // 更新狀態
+    debouncedUpdateQuestionStatus();
+    updateProgressAndScore();
+    saveProgress();
+}
+
+// 批量更新題目狀態（使用防抖）
+const debouncedUpdateQuestionStatus = debounce(() => {
+    const questionItems = domCache.questionItems || document.querySelectorAll('.question-item');
+    const currentQuestions = currentMode === 'exam' ? examQuestions : questions;
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
+    
+    questionItems.forEach((questionItem, index) => {
+        const classes = ['question-item'];
         
-        // 移除所有狀態類
-        questionItem.classList.remove('active', 'answered', 'incorrect');
+        if (index === currentQuestionIndex) classes.push('active');
+        if (currentAnswers[index] !== null) classes.push('answered');
         
-        // 如果是當前題目，添加active類
-        if (index === currentQuestionIndex) {
-            questionItem.classList.add('active');
-        }
-        
-        // 如果用戶已回答，只標記已回答（不顯示正確/錯誤）
-        if (userAnswers[index] !== null) {
-            questionItem.classList.add('answered');
-        }
-        
-        // 只有在測驗完成後才顯示正確/錯誤
-        if (isExamFinished) {
-            if (userAnswers[index] === question.correctAnswer) {
-                questionItem.classList.add('answered');
+        if (isExamFinished && currentQuestions[index]) {
+            if (currentAnswers[index] === currentQuestions[index].correctAnswer) {
+                classes.push('correct');
             } else {
-                questionItem.classList.add('incorrect');
+                classes.push('incorrect');
             }
         }
+        
+        questionItem.className = classes.join(' ');
     });
-}
-
-// 更新題目列表中的當前題目
-function updateCurrentQuestionInList() {
-    const questionItems = document.querySelectorAll('.question-item');
-    
-    // 移除所有active類
-    questionItems.forEach(item => {
-        item.classList.remove('active');
-    });
-    
-    // 添加active類到當前題目
-    if (questionItems[currentQuestionIndex]) {
-        questionItems[currentQuestionIndex].classList.add('active');
-    }
-}
+}, 50);
 
 // 更新導航按鈕狀態
 function updateNavigationButtons() {
+    const totalQuestions = currentMode === 'exam' ? examQuestions.length : questions.length;
+    
     // 上一題按鈕
     prevBtn.disabled = currentQuestionIndex === 0;
     
     // 下一題按鈕
-    nextBtn.disabled = currentQuestionIndex === questions.length - 1;
+    nextBtn.disabled = currentQuestionIndex === totalQuestions - 1;
 }
 
 // 更新進度和分數
 function updateProgressAndScore() {
+    const currentQuestions = currentMode === 'exam' ? examQuestions : questions;
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
+    
+    if (!currentQuestions.length) return;
+    
     // 計算已回答的題數
-    const answeredCount = userAnswers.filter(answer => answer !== null).length;
+    const answeredCount = currentAnswers.filter(answer => answer !== null).length;
+    const totalQuestions = currentQuestions.length;
+    const progressPercentage = (answeredCount / totalQuestions) * 100;
     
-    // 更新顯示
-    progressElement.textContent = `${answeredCount}/${questions.length}`;
+    // 更新進度顯示
+    progressElement.textContent = `${answeredCount}/${totalQuestions}`;
     
-    // 只有在測驗完成後才計算分數
+    // 更新進度條
+    if (progressFillElement) {
+        progressFillElement.style.width = `${progressPercentage}%`;
+    }
+    
+    // 計算分數（只有在測驗完成後）
     if (isExamFinished) {
         score = 0;
-        questions.forEach((question, index) => {
-            if (userAnswers[index] === question.correctAnswer) {
-                score++;
+        currentQuestions.forEach((question, index) => {
+            if (currentAnswers[index] === question.correctAnswer) {
+                score += currentMode === 'exam' ? 2 : 1;
             }
         });
         scoreElement.textContent = score;
@@ -1139,31 +1644,50 @@ function updateProgressAndScore() {
     }
     
     // 檢查是否所有題目都已回答
-    const allAnswered = userAnswers.every(answer => answer !== null);
+    const allAnswered = currentAnswers.every(answer => answer !== null);
+    const totalCount = currentMode === 'exam' ? examQuestions.length : questions.length;
+    const isComplete = answeredCount === totalCount;
     
-    // 啟用或禁用提交按鈕
-    submitBtn.disabled = !allAnswered || isExamFinished;
-    
-    // 更新提交按鈕文字
-    if (isExamFinished) {
-        submitBtn.textContent = '測驗已完成';
+    // 更新提交按鈕狀態
+    if (currentMode === 'exam') {
+        examSubmitBtn.disabled = false;
+        submitBtn.style.display = 'none';
     } else {
-        submitBtn.textContent = allAnswered ? '提交答案' : '請完成所有題目';
+        submitBtn.disabled = !isComplete || isExamFinished;
+        submitBtn.textContent = isExamFinished ? '測驗已完成' : 
+                              isComplete ? '提交答案' : '請完成所有題目';
+    }
+}
+
+// 更新反饋訊息
+function updateFeedback(question) {
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
+    
+    if (isExamFinished) {
+        // 在模擬考結束後，無論對錯都顯示詳解
+        feedbackElement.textContent = `詳解：${question.explanation}`;
+        
+        if (currentAnswers[currentQuestionIndex] === question.correctAnswer) {
+            feedbackElement.className = 'feedback correct fade-in';
+        } else {
+            feedbackElement.className = 'feedback incorrect fade-in';
+        }
+        feedbackElement.style.display = 'block';
+    } else {
+        feedbackElement.style.display = 'none';
     }
 }
 
 // 提交答案
 function submitAnswer() {
-    if (isExamFinished) {
-        return;
-    }
+    if (isExamFinished) return;
     
     const allAnswered = userAnswers.every(answer => answer !== null);
     if (!allAnswered) {
+        showAlert('請完成所有題目後再提交！', '提示');
         return;
     }
     
-    // 標記測驗已完成
     isExamFinished = true;
     
     // 禁用所有選項
@@ -1171,7 +1695,7 @@ function submitAnswer() {
         option.style.pointerEvents = 'none';
     });
     
-    // 計算分數
+    // 計算分數和錯誤答案
     score = 0;
     let wrongAnswers = [];
     
@@ -1182,52 +1706,41 @@ function submitAnswer() {
             wrongAnswers.push({
                 id: question.id,
                 question: question.text,
-                userAnswer: question.options[userAnswers[index]],
+                userAnswer: userAnswers[index] !== null ? question.options[userAnswers[index]] : '未作答',
                 correctAnswer: question.options[question.correctAnswer],
                 explanation: question.explanation
             });
         }
     });
     
-    // 更新題目列表狀態（顯示正確/錯誤）
-    updateQuestionStatus();
-    
-    // 顯示結果面板
+    // 顯示結果
     showResultPanel(score, wrongAnswers);
-    
-    // 更新提交按鈕狀態
+    debouncedUpdateQuestionStatus();
     updateProgressAndScore();
+    saveProgress();
     
-    // 如果當前題目答錯，顯示正確答案
+    // 顯示當前題目的正確答案（如果答錯）
     const currentQuestion = questions[currentQuestionIndex];
     if (userAnswers[currentQuestionIndex] !== currentQuestion.correctAnswer) {
-        const options = document.querySelectorAll('.option');
-        options.forEach((option, optIndex) => {
-            if (optIndex === currentQuestion.correctAnswer) {
-                option.classList.add('correct');
-            } else if (optIndex === userAnswers[currentQuestionIndex]) {
-                option.classList.add('incorrect');
-            }
-        });
-        
-        feedbackElement.textContent = `正確答案是：${currentQuestion.options[currentQuestion.correctAnswer]}。${currentQuestion.explanation}`;
-        feedbackElement.className = 'feedback incorrect';
-        feedbackElement.style.display = 'block';
+        updateFeedback(currentQuestion);
     }
 }
 
-// 新增顯示結果面板函數
+// 顯示結果面板
 function showResultPanel(score, wrongAnswers) {
     const resultPanel = document.getElementById('result-panel');
     const resultContent = document.getElementById('result-content');
     
     let resultHTML = `
-        <div style="text-align: center; margin-bottom: 15px;">
+        <div style="text-align: center; margin-bottom: 15px;" class="fade-in">
             <h4 style="color: ${score >= questions.length * 0.6 ? '#27ae60' : '#e74c3c'}">
                 測驗完成！您的總分是：${score}/${questions.length}
             </h4>
         </div>
     `;
+    
+    // 顯示詳細統計
+    resultHTML += generateStatisticsHTML();
     
     if (wrongAnswers.length > 0) {
         resultHTML += `
@@ -1238,7 +1751,7 @@ function showResultPanel(score, wrongAnswers) {
         
         wrongAnswers.forEach((item, index) => {
             resultHTML += `
-                <div style="margin-bottom: 15px; padding: 10px; background: #fff; border-radius: 4px; border-left: 4px solid #e74c3c;">
+                <div class="wrong-answer-item fade-in" style="animation-delay: ${index * 0.1}s">
                     <div><strong>題目 ${item.id}:</strong> ${item.question}</div>
                     <div style="margin-top: 5px;">
                         <span class="incorrect-answer">您的答案: ${item.userAnswer}</span>
@@ -1254,7 +1767,7 @@ function showResultPanel(score, wrongAnswers) {
         });
     } else {
         resultHTML += `
-            <div style="text-align: center; color: #27ae60; font-weight: bold;">
+            <div style="text-align: center; color: #27ae60; font-weight: bold;" class="fade-in">
                 恭喜！所有題目都答對了！
             </div>
         `;
@@ -1267,23 +1780,249 @@ function showResultPanel(score, wrongAnswers) {
     resultPanel.scrollIntoView({ behavior: 'smooth' });
 }
 
+// 生成統計 HTML
+function generateStatisticsHTML() {
+    const stats = generateStatistics();
+    const percentage = Math.round((stats.correct / stats.total) * 100);
+    
+    return `
+        <div class="statistics-panel fade-in">
+            <h4>📊 詳細統計</h4>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #48bb78;">${stats.correct}</div>
+                    <div class="stat-label">答對</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #f56565;">${stats.incorrect}</div>
+                    <div class="stat-label">答錯</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #a0aec0;">${stats.unanswered}</div>
+                    <div class="stat-label">未答</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" style="color: #4299e1;">${percentage}%</div>
+                    <div class="stat-label">正確率</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// 生成統計數據
+function generateStatistics() {
+    const currentQuestions = currentMode === 'exam' ? examQuestions : questions;
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
+    
+    const stats = {
+        total: currentQuestions.length,
+        answered: currentAnswers.filter(a => a !== null).length,
+        correct: 0,
+        incorrect: 0,
+        unanswered: 0,
+        byCategory: { 1: { correct: 0, total: 0 }, 2: { correct: 0, total: 0 } }
+    };
+    
+    currentQuestions.forEach((question, index) => {
+        if (currentAnswers[index] === null) {
+            stats.unanswered++;
+        } else if (currentAnswers[index] === question.correctAnswer) {
+            stats.correct++;
+            stats.byCategory[question.category].correct++;
+        } else {
+            stats.incorrect++;
+        }
+        stats.byCategory[question.category].total++;
+    });
+    
+    return stats;
+}
+
+// 獲取錯誤答案
+function getWrongAnswers() {
+    const currentQuestions = currentMode === 'exam' ? examQuestions : questions;
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
+    const wrongAnswers = [];
+    
+    currentQuestions.forEach((question, index) => {
+        if (currentAnswers[index] !== question.correctAnswer) {
+            const userAnswerIndex = currentAnswers[index];
+            const userAnswerText = userAnswerIndex !== null ? 
+                question.options[userAnswerIndex] : '未作答';
+            
+            wrongAnswers.push({
+                id: currentMode === 'exam' ? (index + 1) : question.id,
+                question: question.text,
+                userAnswer: userAnswerText,
+                correctAnswer: question.options[question.correctAnswer],
+                explanation: question.explanation,
+                originalIndex: index // 保存原始索引用於跳轉
+            });
+        }
+    });
+    
+    return wrongAnswers;
+}
+
+// 鍵盤快捷鍵處理
+function handleKeyboardShortcuts(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    
+    switch(e.key) {
+        case 'ArrowLeft':
+            if (!prevBtn.disabled) {
+                e.preventDefault();
+                currentQuestionIndex--;
+                safeDisplayQuestion();
+                saveProgress();
+            }
+            break;
+        case 'ArrowRight':
+            if (!nextBtn.disabled) {
+                e.preventDefault();
+                currentQuestionIndex++;
+                safeDisplayQuestion();
+                saveProgress();
+            }
+            break;
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+            const optionIndex = parseInt(e.key) - 1;
+            const options = domCache.options || document.querySelectorAll('.option');
+            if (options[optionIndex] && !isExamFinished) {
+                e.preventDefault();
+                selectOption(optionIndex);
+            }
+            break;
+        case 'Enter':
+            if (e.ctrlKey && currentMode === 'exam' && canSubmitExam()) {
+                e.preventDefault();
+                submitExam();
+            }
+            break;
+    }
+}
+
+// 自動保存進度
+function saveProgress() {
+    const progress = {
+        mode: currentMode,
+        currentQuestionIndex,
+        userAnswers: [...userAnswers],
+        isExamFinished,
+        score,
+        timestamp: Date.now()
+    };
+    
+    if (currentMode === 'exam') {
+        progress.examTimeLeft = examTimeLeft;
+        progress.examQuestions = examQuestions.map(q => q.id);
+        progress.isExamStarted = isExamStarted;
+    }
+    
+    try {
+        localStorage.setItem('tqc-ai-quiz-progress', JSON.stringify(progress));
+    } catch (error) {
+        console.warn('無法保存進度:', error);
+    }
+}
+
+// 載入進度
+function loadProgress() {
+    try {
+        const saved = localStorage.getItem('tqc-ai-quiz-progress');
+        if (!saved) return false;
+        
+        const progress = JSON.parse(saved);
+        // 檢查是否過期（超過24小時）
+        if (Date.now() - progress.timestamp > 24 * 60 * 60 * 1000) {
+            localStorage.removeItem('tqc-ai-quiz-progress');
+            return false;
+        }
+        
+        return progress;
+    } catch {
+        return false;
+    }
+}
+
+// 應用保存的進度
+function applySavedProgress(progress) {
+    showConfirm(
+        '發現未完成的測驗，是否繼續？',
+        '恢復進度',
+        () => {
+            currentMode = progress.mode;
+            currentQuestionIndex = progress.currentQuestionIndex;
+            userAnswers = progress.userAnswers;
+            isExamFinished = progress.isExamFinished;
+            score = progress.score;
+            
+            if (currentMode === 'exam') {
+                examTimeLeft = progress.examTimeLeft;
+                isExamStarted = progress.isExamStarted;
+                // 重建考題
+                examQuestions = progress.examQuestions.map(id => 
+                    questions.find(q => q.id === id)
+                ).filter(q => q);
+                
+                initializeExamQuestionList();
+                startExamTimer();
+            } else {
+                initializeQuestionList();
+            }
+            
+            safeDisplayQuestion();
+            updateProgressAndScore();
+            
+            // 更新模式按鈕狀態
+            practiceModeBtn.classList.toggle('active', currentMode === 'practice');
+            examModeBtn.classList.toggle('active', currentMode === 'exam');
+            examTimerElement.style.display = currentMode === 'exam' ? 'block' : 'none';
+            examSubmitBtn.style.display = currentMode === 'exam' ? 'inline-block' : 'none';
+            submitBtn.style.display = currentMode === 'exam' ? 'none' : 'inline-block';
+        },
+        () => {
+            // 用戶選擇重新開始
+            localStorage.removeItem('tqc-ai-quiz-progress');
+            initializeQuestionList();
+            displayQuestion();
+        }
+    );
+}
+
+// 檢查模擬考是否可提交
+function canSubmitExam() {
+    if (currentMode !== 'exam') return false;
+    return isExamStarted && !isExamFinished;
+}
+
 // 事件監聽器
 prevBtn.addEventListener('click', () => {
     if (currentQuestionIndex > 0) {
         currentQuestionIndex--;
-        displayQuestion();
+        safeDisplayQuestion();
+        saveProgress();
     }
 });
 
 nextBtn.addEventListener('click', () => {
-    if (currentQuestionIndex < questions.length - 1) {
+    const totalQuestions = currentMode === 'exam' ? examQuestions.length : questions.length;
+    if (currentQuestionIndex < totalQuestions - 1) {
         currentQuestionIndex++;
-        displayQuestion();
+        safeDisplayQuestion();
+        saveProgress();
     }
 });
 
 submitBtn.addEventListener('click', submitAnswer);
 
-// 初始化
-initializeQuestionList();
-displayQuestion();
+// 頁面卸載前保存進度
+window.addEventListener('beforeunload', () => {
+    if (currentMode === 'exam' && isExamStarted && !isExamFinished) {
+        saveProgress();
+    }
+});
