@@ -18,6 +18,101 @@
     </div>
 </div>
 <body class="mode-not-selected"></body>
+<!-- 學習分析報告模態框 -->
+<div class="modal" id="analysis-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>📊 學習分析報告</h2>
+            <span class="close" id="close-analysis">&times;</span>
+        </div>
+        <div class="modal-body" id="analysis-content">
+            <!-- 分析內容將由JS生成 -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" id="export-analysis">匯出報告</button>
+            <button class="btn-primary" id="close-analysis-btn">關閉</button>
+        </div>
+    </div>
+</div>
+
+<!-- 自定義測驗模態框 -->
+<div class="modal" id="custom-quiz-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>🎯 自定義測驗</h2>
+            <span class="close" id="close-custom-quiz">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="custom-quiz-form">
+                <div class="form-group">
+                    <label>測驗標題</label>
+                    <input type="text" id="quiz-title" placeholder="輸入測驗標題" value="自定義測驗">
+                </div>
+                
+                <div class="form-group">
+                    <label>題目數量</label>
+                    <input type="number" id="quiz-quantity" min="5" max="72" value="20">
+                </div>
+                
+                <div class="form-group">
+                    <label>測驗時間（分鐘）</label>
+                    <input type="number" id="quiz-time" min="5" max="120" value="30">
+                </div>
+                
+                <div class="form-group">
+                    <label>選擇題目類別</label>
+                    <div class="category-checkboxes">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="category1-check" checked> 
+                            第一類：AI 發展歷程與生態系
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="category2-check" checked> 
+                            第二類：AI 應用領域與產業發展
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>題目難度篩選</label>
+                    <div class="difficulty-options">
+                        <label class="radio-label">
+                            <input type="radio" name="difficulty" value="all" checked> 
+                            全部題目
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="difficulty" value="weakness"> 
+                            弱點題目
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="difficulty" value="unanswered"> 
+                            未答題目
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="quiz-preview" id="quiz-preview">
+                    <h4>測驗預覽</h4>
+                    <div id="preview-content">選擇設定後將顯示預覽</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" id="preview-quiz">更新預覽</button>
+            <button class="btn-primary" id="start-custom-quiz">開始測驗</button>
+        </div>
+    </div>
+</div>
+
+<!-- 新增功能按鈕區域 -->
+<div class="feature-buttons">
+    <button class="feature-btn" id="analysis-btn">
+        📊 學習分析報告
+    </button>
+    <button class="feature-btn" id="custom-quiz-btn">
+        🎯 自定義測驗
+    </button>
+</div>
 <body>
     <div class="container">
         <header>

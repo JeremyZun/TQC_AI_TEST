@@ -961,6 +961,10 @@ let weaknessStats = {
 let alertConfirm = document.getElementById('alert-confirm');
 let alertCancel = document.getElementById('alert-cancel');
 
+// 自定義測驗狀態
+let customQuizQuestions = [];
+let customQuizTime = 30 * 60;
+
 // 新增：緩存 DOM 查詢結果
 const domCache = {
     questionItems: null,
@@ -1009,6 +1013,38 @@ const improvementPercentElement = document.getElementById('improvement-percent')
 const weaknessCategoriesElement = document.getElementById('weakness-categories');
 const weaknessTrainingBtn = document.getElementById('weakness-training-btn');
 const weaknessModeBtn = document.getElementById('weakness-mode-btn');
+// 新增功能按鈕
+const analysisBtn = document.getElementById('analysis-btn');
+const customQuizBtn = document.getElementById('custom-quiz-btn');
+
+// 學習分析報告模態框元素
+const analysisModal = document.getElementById('analysis-modal');
+const closeAnalysis = document.getElementById('close-analysis');
+const closeAnalysisBtn = document.getElementById('close-analysis-btn');
+const analysisContent = document.getElementById('analysis-content');
+const exportAnalysisBtn = document.getElementById('export-analysis');
+
+// 自定義測驗模態框元素
+const customQuizModal = document.getElementById('custom-quiz-modal');
+const closeCustomQuiz = document.getElementById('close-custom-quiz');
+const quizTitleInput = document.getElementById('quiz-title');
+const quizQuantityInput = document.getElementById('quiz-quantity');
+const quizTimeInput = document.getElementById('quiz-time');
+const category1Check = document.getElementById('category1-check');
+const category2Check = document.getElementById('category2-check');
+const previewQuizBtn = document.getElementById('preview-quiz');
+const startCustomQuizBtn = document.getElementById('start-custom-quiz');
+const previewContent = document.getElementById('preview-content');
+
+// 事件監聽器
+analysisBtn.addEventListener('click', showAnalysisReport);
+customQuizBtn.addEventListener('click', showCustomQuizModal);
+closeAnalysis.addEventListener('click', hideAnalysisModal);
+closeAnalysisBtn.addEventListener('click', hideAnalysisModal);
+closeCustomQuiz.addEventListener('click', hideCustomQuizModal);
+previewQuizBtn.addEventListener('click', updateQuizPreview);
+startCustomQuizBtn.addEventListener('click', startCustomQuiz);
+exportAnalysisBtn.addEventListener('click', exportAnalysisReport);
 
 // 在事件監聽器區域新增
 weaknessTrainingBtn.addEventListener('click', startWeaknessTraining);
@@ -1023,6 +1059,357 @@ examSubmitBtn.addEventListener('click', submitExam);
 
 // 新增：鍵盤快捷鍵支持
 document.addEventListener('keydown', handleKeyboardShortcuts);
+
+// 點擊模態框外部關閉
+window.addEventListener('click', (e) => {
+    if (e.target === analysisModal) hideAnalysisModal();
+    if (e.target === customQuizModal) hideCustomQuizModal();
+});
+
+// 顯示學習分析報告
+function showAnalysisReport() {
+    generateAnalysisContent();
+    analysisModal.classList.add('show');
+}
+
+// 隱藏學習分析報告
+function hideAnalysisModal() {
+    analysisModal.classList.remove('show');
+}
+
+// 顯示自定義測驗模態框
+function showCustomQuizModal() {
+    updateQuizPreview();
+    customQuizModal.classList.add('show');
+}
+
+// 隱藏自定義測驗模態框
+function hideCustomQuizModal() {
+    customQuizModal.classList.remove('show');
+}
+
+// 生成學習分析報告內容
+function generateAnalysisContent() {
+    const stats = generateDetailedStatistics();
+    const recommendations = generateRecommendations(stats);
+    
+    analysisContent.innerHTML = `
+        <div class="analysis-section">
+            <h3>📈 整體學習進度</h3>
+            <div class="analysis-grid">
+                <div class="analysis-card">
+                    <div class="analysis-value">${stats.totalAnswered}/${stats.totalQuestions}</div>
+                    <div class="analysis-label">已完成題目</div>
+                </div>
+                <div class="analysis-card ${stats.accuracy >= 70 ? 'success' : 'warning'}">
+                    <div class="analysis-value">${stats.accuracy}%</div>
+                    <div class="analysis-label">整體正確率</div>
+                </div>
+                <div class="analysis-card">
+                    <div class="analysis-value">${stats.studyTime}</div>
+                    <div class="analysis-label">學習時間</div>
+                </div>
+                <div class="analysis-card">
+                    <div class="analysis-value">${stats.weakAreas}</div>
+                    <div class="analysis-label">弱點領域</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-section">
+            <h3>📊 類別表現分析</h3>
+            <div class="progress-chart">
+                ${Object.entries(stats.categoryStats).map(([category, data]) => `
+                    <div class="chart-bar">
+                        <div class="chart-label">${category === '1' ? 'AI發展歷程' : 'AI應用領域'}</div>
+                        <div class="chart-track">
+                            <div class="chart-fill" style="width: ${data.accuracy}%"></div>
+                        </div>
+                        <div class="chart-value">${data.accuracy}%</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="analysis-section">
+            <h3>🎯 弱點分析</h3>
+            <div class="progress-chart">
+                ${stats.weaknessDetails.map(weakness => `
+                    <div class="chart-bar">
+                        <div class="chart-label">${weakness.category}</div>
+                        <div class="chart-track">
+                            <div class="chart-fill" style="width: ${weakness.accuracy}%; background: #e53e3e;"></div>
+                        </div>
+                        <div class="chart-value">${weakness.accuracy}%</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="analysis-section">
+            <h3>📝 學習趨勢</h3>
+            <div class="progress-chart">
+                <div class="chart-bar">
+                    <div class="chart-label">最近正確率</div>
+                    <div class="chart-track">
+                        <div class="chart-fill" style="width: ${stats.recentAccuracy}%"></div>
+                    </div>
+                    <div class="chart-value">${stats.recentAccuracy}%</div>
+                </div>
+                <div class="chart-bar">
+                    <div class="chart-label">進步幅度</div>
+                    <div class="chart-track">
+                        <div class="chart-fill" style="width: ${Math.max(0, stats.improvement)}%"></div>
+                    </div>
+                    <div class="chart-value">${stats.improvement > 0 ? '+' : ''}${stats.improvement}%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="recommendations">
+            <h4>💡 學習建議</h4>
+            <ul>
+                ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+            </ul>
+        </div>
+    `;
+}
+
+// 生成詳細統計數據
+function generateDetailedStatistics() {
+    const currentQuestions = currentMode === 'exam' ? examQuestions : questions;
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
+    
+    const stats = {
+        totalQuestions: currentQuestions.length,
+        totalAnswered: 0,
+        correct: 0,
+        incorrect: 0,
+        unanswered: 0,
+        categoryStats: {
+            1: { correct: 0, total: 0, accuracy: 0 },
+            2: { correct: 0, total: 0, accuracy: 0 }
+        },
+        weaknessDetails: [],
+        studyTime: '0小時',
+        weakAreas: 0,
+        accuracy: 0,
+        recentAccuracy: 0,
+        improvement: 0
+    };
+
+    // 計算基本統計 - 修正這裡
+    currentQuestions.forEach((question, index) => {
+        if (currentAnswers[index] !== null) {
+            stats.totalAnswered++;
+            if (currentAnswers[index] === question.correctAnswer) {
+                stats.correct++;
+                stats.categoryStats[question.category].correct++;
+            } else {
+                stats.incorrect++;
+            }
+        } else {
+            stats.unanswered++;
+        }
+        stats.categoryStats[question.category].total++;
+    });
+
+    // 計算準確率（小數點後兩位）
+    stats.accuracy = stats.totalAnswered > 0 ? 
+        Math.round((stats.correct / stats.totalAnswered) * 100 * 100) / 100 : 0;
+
+    // 計算類別準確率（小數點後兩位）
+    Object.keys(stats.categoryStats).forEach(category => {
+        const cat = stats.categoryStats[category];
+        cat.accuracy = cat.total > 0 ? 
+            Math.round((cat.correct / cat.total) * 100 * 100) / 100 : 0;
+        
+        // 識別弱點領域
+        if (cat.accuracy < 70 && cat.total > 0) {
+            stats.weakAreas++;
+            stats.weaknessDetails.push({
+                category: category === '1' ? 'AI發展歷程' : 'AI應用領域',
+                accuracy: cat.accuracy,
+                correct: cat.correct,
+                total: cat.total
+            });
+        }
+    });
+
+    // 模擬學習時間（實際應用中可以從localStorage讀取）
+    const savedProgress = loadProgress();
+    if (savedProgress) {
+        const hours = Math.round((Date.now() - savedProgress.timestamp) / (1000 * 60 * 60));
+        stats.studyTime = `${hours}小時`;
+    }
+
+    // 模擬最近正確率和進步幅度（小數點後兩位）
+    stats.recentAccuracy = Math.min(100, Math.round((stats.accuracy + Math.random() * 20) * 100) / 100);
+    stats.improvement = Math.round((stats.recentAccuracy - stats.accuracy) * 100) / 100;
+
+    return stats;
+}
+
+// 生成學習建議
+function generateRecommendations(stats) {
+    const recommendations = [];
+    
+    if (stats.accuracy < 60) {
+        recommendations.push('建議從基礎概念開始複習，加強對基本知識的理解');
+    } else if (stats.accuracy < 80) {
+        recommendations.push('繼續保持練習，重點關注錯誤題目的複習');
+    } else {
+        recommendations.push('表現優秀！可以挑戰更高難度的題目或進行模擬考試');
+    }
+
+    if (stats.weakAreas > 0) {
+        recommendations.push(`專注於 ${stats.weaknessDetails.map(w => w.category).join('、')} 的弱點訓練`);
+    }
+
+    if (stats.unanswered > stats.totalQuestions * 0.3) {
+        recommendations.push('請完成更多題目以獲得準確的學習分析');
+    }
+
+    recommendations.push('定期複習錯誤題目，鞏固學習成果');
+    recommendations.push('建議每週至少進行一次模擬考試檢驗學習效果');
+
+    return recommendations;
+}
+
+// 匯出分析報告
+function exportAnalysisReport() {
+    const stats = generateDetailedStatistics();
+    const content = `
+學習分析報告
+生成時間: ${new Date().toLocaleString()}
+
+📊 整體統計
+-----------
+已完成題目: ${stats.totalAnswered}/${stats.totalQuestions}
+整體正確率: ${stats.accuracy}%
+學習時間: ${stats.studyTime}
+弱點領域: ${stats.weakAreas}個
+
+📈 類別表現
+-----------
+${Object.entries(stats.categoryStats).map(([category, data]) => 
+    `${category === '1' ? 'AI發展歷程' : 'AI應用領域'}: ${data.accuracy}% (${data.correct}/${data.total})`
+).join('\n')}
+
+🎯 學習建議
+-----------
+${generateRecommendations(stats).join('\n• ')}
+
+祝您學習進步！
+    `.trim();
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `學習分析報告_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showAlert('分析報告已匯出！', '匯出成功');
+}
+
+// 更新測驗預覽
+function updateQuizPreview() {
+    const quantity = parseInt(quizQuantityInput.value) || 20;
+    const selectedCategories = [];
+    if (category1Check.checked) selectedCategories.push(1);
+    if (category2Check.checked) selectedCategories.push(2);
+    
+    const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+    
+    // 根據選擇篩選題目
+    let availableQuestions = questions.filter(q => 
+        selectedCategories.includes(q.category)
+    );
+    
+    // 根據難度篩選
+    if (difficulty === 'weakness') {
+        availableQuestions = availableQuestions.filter((q, index) => 
+            userAnswers[index] !== q.correctAnswer
+        );
+    } else if (difficulty === 'unanswered') {
+        availableQuestions = availableQuestions.filter((q, index) => 
+            userAnswers[index] === null
+        );
+    }
+    
+    const actualQuantity = Math.min(quantity, availableQuestions.length);
+    
+    previewContent.innerHTML = `
+        <div style="color: #4a5568;">
+            <p><strong>測驗設定：</strong></p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+                <li>題目數量: ${actualQuantity}題</li>
+                <li>測驗時間: ${quizTimeInput.value}分鐘</li>
+                <li>題目類別: ${selectedCategories.map(cat => cat === 1 ? 'AI發展歷程' : 'AI應用領域').join('、')}</li>
+                <li>篩選條件: ${
+                    difficulty === 'all' ? '全部題目' : 
+                    difficulty === 'weakness' ? '弱點題目' : '未答題目'
+                }</li>
+            </ul>
+            <p style="color: ${actualQuantity < quantity ? '#e53e3e' : '#48bb78'}">
+                <strong>可用題目: ${availableQuestions.length}題</strong>
+                ${actualQuantity < quantity ? '（題目數量不足，將使用所有可用題目）' : ''}
+            </p>
+        </div>
+    `;
+    
+    // 儲存可用的題目
+    customQuizQuestions = availableQuestions.slice(0, actualQuantity);
+}
+
+// 開始自定義測驗
+function startCustomQuiz() {
+    if (customQuizQuestions.length === 0) {
+        showAlert('沒有可用的題目，請調整測驗設定', '錯誤');
+        return;
+    }
+    
+    hideCustomQuizModal();
+    
+    // 切換到模擬考模式
+    switchMode('exam');
+    
+    // 使用自定義題目
+    examQuestions = customQuizQuestions;
+    examTimeLeft = (parseInt(quizTimeInput.value) || 30) * 60;
+    userAnswers = new Array(examQuestions.length).fill(null);
+    currentQuestionIndex = 0;
+    isExamStarted = true;
+    isExamFinished = false;
+    
+    // 更新顯示
+    examQuestionCountElement.textContent = examQuestions.length;
+    initializeExamQuestionList();
+    startExamTimer();
+    safeDisplayQuestion();
+    
+    showAlert(
+        `自定義測驗開始！\n\n` +
+        `題目數量: ${examQuestions.length}題\n` +
+        `測驗時間: ${Math.floor(examTimeLeft / 60)}分鐘\n` +
+        `祝您考試順利！`,
+        '測驗開始'
+    );
+}
+
+// 在頁面載入時初始化功能按鈕
+document.addEventListener('DOMContentLoaded', () => {
+    // 確保功能按鈕在容器內
+    const container = document.querySelector('.container');
+    const featureButtons = document.querySelector('.feature-buttons');
+    if (container && featureButtons) {
+        container.insertBefore(featureButtons, container.querySelector('.main-content'));
+    }
+});
 
 // 初始化時嘗試載入進度
 window.addEventListener('load', () => {
@@ -1040,8 +1427,42 @@ window.addEventListener('load', () => {
 function analyzeWeaknesses() {
     if (currentMode === 'exam' && !isExamFinished) return;
     
-    const stats = generateStatistics();
+    const stats = generateWeaknessStatistics();
     updateWeaknessPanel(stats);
+}
+
+function generateWeaknessStatistics() {
+    const currentQuestions = currentMode === 'exam' ? examQuestions : questions;
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
+    
+    const stats = {
+        byCategory: {
+            1: { correct: 0, total: 0, accuracy: 0 },
+            2: { correct: 0, total: 0, accuracy: 0 }
+        },
+        totalAnswered: 0,
+        totalCorrect: 0
+    };
+    
+    currentQuestions.forEach((question, index) => {
+        if (currentAnswers[index] !== null) {
+            stats.totalAnswered++;
+            if (currentAnswers[index] === question.correctAnswer) {
+                stats.totalCorrect++;
+                stats.byCategory[question.category].correct++;
+            }
+        }
+        stats.byCategory[question.category].total++;
+    });
+    
+    // 計算準確率
+    Object.keys(stats.byCategory).forEach(category => {
+        const cat = stats.byCategory[category];
+        cat.accuracy = cat.total > 0 ? 
+            Math.round((cat.correct / cat.total) * 100 * 100) / 100 : 0;
+    });
+    
+    return stats;
 }
 
 function updateWeaknessPanel(stats) {
@@ -1056,16 +1477,16 @@ function updateWeaknessPanel(stats) {
     
     Object.entries(stats.byCategory).forEach(([category, data]) => {
         if (data.total > 0) {
-            const accuracy = data.correct / data.total;
-            if (accuracy < 0.7) { // 正確率低於70%視為弱點
+            const accuracy = data.accuracy;
+            if (accuracy < 70) { // 正確率低於70%視為弱點
                 weakCategories.push({
                     category: parseInt(category),
                     accuracy: accuracy,
                     correct: data.correct,
                     total: data.total,
-                    improvement: (0.7 - accuracy) * 100
+                    improvement: Math.round((70 - accuracy) * 100) / 100
                 });
-                totalImprovement += (0.7 - accuracy) * 100;
+                totalImprovement += Math.round((70 - accuracy) * 100) / 100;
             }
         }
     });
@@ -1078,7 +1499,10 @@ function updateWeaknessPanel(stats) {
     // 顯示弱點面板
     weaknessPanel.style.display = 'block';
     weaknessCountElement.textContent = weakCategories.length;
-    improvementPercentElement.textContent = Math.round(totalImprovement / weakCategories.length) + '%';
+    
+    const avgImprovement = weakCategories.length > 0 ? 
+        Math.round((totalImprovement / weakCategories.length) * 100) / 100 : 0;
+    improvementPercentElement.textContent = avgImprovement + '%';
     
     // 更新弱點分類
     weaknessCategoriesElement.innerHTML = '';
@@ -1088,18 +1512,17 @@ function updateWeaknessPanel(stats) {
         
         const categoryName = cat.category === 1 ? 
             'AI 發展歷程與生態系' : 'AI 應用領域與產業發展';
-        const accuracyPercent = Math.round(cat.accuracy * 100);
         
         categoryElement.innerHTML = `
             <div class="weakness-category-header">
                 <div class="weakness-category-name">${categoryName}</div>
                 <div class="weakness-category-stats">
-                    <span class="weakness-score">${accuracyPercent}% 正確率</span>
+                    <span class="weakness-score">${cat.accuracy}% 正確率</span>
                     <span>${cat.correct}/${cat.total} 題</span>
                 </div>
             </div>
             <div class="weakness-progress">
-                <div class="weakness-progress-fill" style="width: ${accuracyPercent}%"></div>
+                <div class="weakness-progress-fill" style="width: ${cat.accuracy}%"></div>
             </div>
         `;
         
@@ -1824,6 +2247,8 @@ function calculateExamScore() {
                 }
             });
         }
+        // 如果需要顯示百分比分數，可以在這裡計算
+        const percentageScore = Math.round((score / (examQuestions.length * 2)) * 100 * 100) / 100;
     } catch (error) {
         console.error('計算分數時發生錯誤:', error);
         score = 0;
@@ -2257,6 +2682,14 @@ function updateProgressAndScore() {
     const totalQuestions = currentQuestions.length;
     const progressPercentage = (answeredCount / totalQuestions) * 100;
     
+    // 計算正確答案數量
+    let correctCount = 0;
+    currentQuestions.forEach((question, index) => {
+        if (currentAnswers[index] === question.correctAnswer) {
+            correctCount++;
+        }
+    });
+    
     // 更新進度顯示
     progressElement.textContent = `${answeredCount}/${totalQuestions}`;
     
@@ -2275,7 +2708,13 @@ function updateProgressAndScore() {
         });
         scoreElement.textContent = score;
     } else {
-        scoreElement.textContent = '--';
+        // 在練習模式中顯示正確率
+        if (currentMode === 'practice' && answeredCount > 0) {
+            const accuracy = Math.round((correctCount / answeredCount) * 100);
+            scoreElement.textContent = `${accuracy}%`;
+        } else {
+            scoreElement.textContent = '--';
+        }
     }
     
     // 檢查是否所有題目都已回答
@@ -2421,7 +2860,8 @@ function showResultPanel(score, wrongAnswers) {
 // 生成統計 HTML
 function generateStatisticsHTML() {
     const stats = generateStatistics();
-    const percentage = Math.round((stats.correct / stats.total) * 100);
+    const totalAnswered = stats.answered;
+    const percentage = totalAnswered > 0 ? Math.round((stats.correct / totalAnswered) * 100 * 100) / 100 : 0;
     
     return `
         <div class="statistics-panel fade-in">
@@ -2439,10 +2879,10 @@ function generateStatisticsHTML() {
                     <div class="stat-value" style="color: #a0aec0;">${stats.unanswered}</div>
                     <div class="stat-label">未答</div>
                 </div>
-                <div class="stat-item">
-                    <div class="stat-value" style="color: #4299e1;">${percentage}%</div>
-                    <div class="stat-label">正確率</div>
-                </div>
+            </div>
+            <div class="stats-accuracy">
+                <div class="accuracy-value">${percentage}%</div>
+                <div class="accuracy-label">正確率</div>
             </div>
         </div>
     `;
@@ -2455,7 +2895,7 @@ function generateStatistics() {
     
     const stats = {
         total: currentQuestions.length,
-        answered: currentAnswers.filter(a => a !== null).length,
+        answered: 0,
         correct: 0,
         incorrect: 0,
         unanswered: 0,
@@ -2465,11 +2905,14 @@ function generateStatistics() {
     currentQuestions.forEach((question, index) => {
         if (currentAnswers[index] === null) {
             stats.unanswered++;
-        } else if (currentAnswers[index] === question.correctAnswer) {
-            stats.correct++;
-            stats.byCategory[question.category].correct++;
         } else {
-            stats.incorrect++;
+            stats.answered++;
+            if (currentAnswers[index] === question.correctAnswer) {
+                stats.correct++;
+                stats.byCategory[question.category].correct++;
+            } else {
+                stats.incorrect++;
+            }
         }
         stats.byCategory[question.category].total++;
     });
