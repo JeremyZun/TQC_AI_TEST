@@ -6,165 +6,167 @@
     <title>TQC人工智慧應用與技術測驗</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<!-- 自定義提示框 -->
-<div class="custom-alert" id="custom-alert">
-    <div class="alert-content">
-        <div class="alert-title" id="alert-title">提示</div>
-        <div class="alert-message" id="alert-message"></div>
-        <div class="alert-buttons">
-            <button class="alert-btn confirm" id="alert-confirm">確定</button>
-            <button class="alert-btn cancel" id="alert-cancel" style="display: none;">取消</button>
-        </div>
-    </div>
-</div>
-<body class="mode-not-selected"></body>
-<!-- 學習分析報告模態框 -->
-<div class="modal" id="analysis-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>📊 學習分析報告</h2>
-            <span class="close" id="close-analysis">&times;</span>
-        </div>
-        <div class="modal-body" id="analysis-content">
-            <!-- 分析內容將由JS生成 -->
-        </div>
-        <div class="modal-footer">
-            <button class="btn-secondary" id="export-analysis">匯出報告</button>
-            <button class="btn-primary" id="close-analysis-btn">關閉</button>
-        </div>
-    </div>
-</div>
-
-<!-- 自定義測驗模態框 -->
-<div class="modal" id="custom-quiz-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>🎯 自定義測驗</h2>
-            <span class="close" id="close-custom-quiz">&times;</span>
-        </div>
-        <div class="modal-body">
-            <div class="custom-quiz-form">
-                <div class="form-group">
-                    <label>測驗標題</label>
-                    <input type="text" id="quiz-title" placeholder="輸入測驗標題" value="自定義測驗">
-                </div>
-                
-                <div class="form-group">
-                    <label>題目數量</label>
-                    <input type="number" id="quiz-quantity" min="5" max="72" value="20">
-                </div>
-                
-                <div class="form-group">
-                    <label>測驗時間（分鐘）</label>
-                    <input type="number" id="quiz-time" min="5" max="120" value="30">
-                </div>
-                
-                <div class="form-group">
-                    <label>選擇題目類別</label>
-                    <div class="category-checkboxes">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="category1-check" checked> 
-                            第一類：AI 發展歷程與生態系
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="category2-check" checked> 
-                            第二類：AI 應用領域與產業發展
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>題目難度篩選</label>
-                    <div class="difficulty-options">
-                        <label class="radio-label">
-                            <input type="radio" name="difficulty" value="all" checked> 
-                            全部題目
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="difficulty" value="weakness"> 
-                            弱點題目
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="difficulty" value="unanswered"> 
-                            未答題目
-                        </label>
-                    </div>
-                </div>
-                
-                <div class="quiz-preview" id="quiz-preview">
-                    <h4>測驗預覽</h4>
-                    <div id="preview-content">選擇設定後將顯示預覽</div>
-                </div>
+<body class="mode-not-selected">
+    <!-- 自定義提示框 -->
+    <div class="custom-alert" id="custom-alert">
+        <div class="alert-content">
+            <div class="alert-title" id="alert-title">提示</div>
+            <div class="alert-message" id="alert-message"></div>
+            <div class="alert-buttons">
+                <button class="alert-btn confirm" id="alert-confirm">確定</button>
+                <button class="alert-btn cancel" id="alert-cancel" style="display: none;">取消</button>
             </div>
         </div>
-        <div class="modal-footer">
-            <button class="btn-secondary" id="preview-quiz">更新預覽</button>
-            <button class="btn-primary" id="start-custom-quiz">開始測驗</button>
-        </div>
     </div>
-</div>
 
-<!-- 智慧錯題本模態框 -->
-<div class="modal" id="wrong-questions-modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>📚 智慧錯題本</h2>
-            <span class="close" id="close-wrong-questions">&times;</span>
-        </div>
-        <div class="modal-body">
-            <div class="wrong-questions-panel">
-                <h3>🎯 錯題分析與複習</h3>
-                
-                <!-- 統計資訊 -->
-                <div class="wrong-questions-stats" id="wrong-questions-stats">
-                    <!-- 統計數據將由JS生成 -->
-                </div>
-                
-                <!-- 篩選器 -->
-                <div class="wrong-questions-filter" id="wrong-questions-filter">
-                    <button class="filter-btn active" data-filter="all">全部錯題</button>
-                    <button class="filter-btn" data-filter="category1">AI發展歷程</button>
-                    <button class="filter-btn" data-filter="category2">AI應用領域</button>
-                    <button class="filter-btn" data-filter="recent">最近錯誤</button>
-                    <button class="filter-btn" data-filter="frequent">頻繁錯誤</button>
-                </div>
-                
-                <!-- 錯題列表 -->
-                <div class="wrong-questions-list" id="wrong-questions-list">
-                    <!-- 錯題列表將由JS生成 -->
-                </div>
-                
-                <!-- 操作按鈕 -->
-                <div class="wrong-questions-actions">
-                    <button class="wrong-questions-btn secondary" id="export-wrong-questions">
-                        📥 匯出錯題
-                    </button>
-                    <button class="wrong-questions-btn primary" id="start-wrong-questions-training">
-                        🎯 專項練習
-                    </button>
-                </div>
+    <!-- 學習分析報告模態框 -->
+    <div class="modal" id="analysis-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 學習分析報告</h2>
+                <span class="close" id="close-analysis">&times;</span>
+            </div>
+            <div class="modal-body" id="analysis-content">
+                <!-- 分析內容將由JS生成 -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="export-analysis">匯出報告</button>
+                <button class="btn-primary" id="close-analysis-btn">關閉</button>
             </div>
         </div>
-        <div class="modal-footer">
-            <button class="btn-secondary" id="close-wrong-questions-btn">關閉</button>
+    </div>
+
+    <!-- 自定義測驗模態框 -->
+    <div class="modal" id="custom-quiz-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎯 自定義測驗</h2>
+                <span class="close" id="close-custom-quiz">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="custom-quiz-form">
+                    <div class="form-group">
+                        <label>測驗標題</label>
+                        <input type="text" id="quiz-title" placeholder="輸入測驗標題" value="自定義測驗">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>題目數量</label>
+                        <input type="number" id="quiz-quantity" min="5" max="72" value="20">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>測驗時間（分鐘）</label>
+                        <input type="number" id="quiz-time" min="5" max="120" value="30">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>選擇題目類別</label>
+                        <div class="category-checkboxes">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="category1-check" checked> 
+                                第一類：AI 發展歷程與生態系
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="category2-check" checked> 
+                                第二類：AI 應用領域與產業發展
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>題目難度篩選</label>
+                        <div class="difficulty-options">
+                            <label class="radio-label">
+                                <input type="radio" name="difficulty" value="all" checked> 
+                                全部題目
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="difficulty" value="weakness"> 
+                                弱點題目
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="difficulty" value="unanswered"> 
+                                未答題目
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="quiz-preview" id="quiz-preview">
+                        <h4>測驗預覽</h4>
+                        <div id="preview-content">選擇設定後將顯示預覽</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="preview-quiz">更新預覽</button>
+                <button class="btn-primary" id="start-custom-quiz">開始測驗</button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- 新增功能按鈕區域 -->
-<div class="feature-buttons">
-    <button class="feature-btn" id="analysis-btn">
-        📊 學習分析報告
-    </button>
-    <button class="feature-btn" id="custom-quiz-btn">
-        🎯 自定義測驗
-    </button>
-    <button class="feature-btn" id="wrong-questions-btn">
-        📚 智慧錯題本
-    </button>
-</div>
+    <!-- 智慧錯題本模態框 -->
+    <div class="modal" id="wrong-questions-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📚 智慧錯題本</h2>
+                <span class="close" id="close-wrong-questions">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="wrong-questions-panel">
+                    <h3>🎯 錯題分析與複習</h3>
+                    
+                    <!-- 統計資訊 -->
+                    <div class="wrong-questions-stats" id="wrong-questions-stats">
+                        <!-- 統計數據將由JS生成 -->
+                    </div>
+                    
+                    <!-- 篩選器 -->
+                    <div class="wrong-questions-filter" id="wrong-questions-filter">
+                        <button class="filter-btn active" data-filter="all">全部錯題</button>
+                        <button class="filter-btn" data-filter="category1">AI發展歷程</button>
+                        <button class="filter-btn" data-filter="category2">AI應用領域</button>
+                        <button class="filter-btn" data-filter="recent">最近錯誤</button>
+                        <button class="filter-btn" data-filter="frequent">頻繁錯誤</button>
+                    </div>
+                    
+                    <!-- 錯題列表 -->
+                    <div class="wrong-questions-list" id="wrong-questions-list">
+                        <!-- 錯題列表將由JS生成 -->
+                    </div>
+                    
+                    <!-- 操作按鈕 -->
+                    <div class="wrong-questions-actions">
+                        <button class="wrong-questions-btn secondary" id="export-wrong-questions">
+                            📥 匯出錯題
+                        </button>
+                        <button class="wrong-questions-btn primary" id="start-wrong-questions-training">
+                            🎯 專項練習
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="close-wrong-questions-btn">關閉</button>
+            </div>
+        </div>
+    </div>
 
-<body>
+    <!-- 新增功能按鈕區域 -->
+    <div class="feature-buttons">
+        <button class="feature-btn" id="analysis-btn">
+            📊 學習分析報告
+        </button>
+        <button class="feature-btn" id="custom-quiz-btn">
+            🎯 自定義測驗
+        </button>
+        <button class="feature-btn" id="wrong-questions-btn">
+            📚 智慧錯題本
+        </button>
+    </div>
+
+    <!-- 添加主要內容錨點 -->
+    <a id="main-content" class="sr-only" tabindex="-1"></a>
     <div class="container">
         <header>
             <h1>TQC 人工智慧應用與技術-實用級</h1>
@@ -239,8 +241,8 @@
                 </div>
 
                 <div class="result-panel" id="result-panel" style="display: none;">
-                <h3>測驗結果</h3>
-                <div id="result-content"></div>
+                    <h3>測驗結果</h3>
+                    <div id="result-content"></div>
                 </div>
             </div>
             
