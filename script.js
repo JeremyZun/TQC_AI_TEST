@@ -957,6 +957,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (container && featureButtons) {
         container.insertBefore(featureButtons, container.querySelector('.main-content'));
     }
+
+    // 新增：初始化題庫瀏覽按鈕狀態
+    // 如果沒有選擇模式，按鈕應該顯示
+    questionBankBtn.style.display = 'inline-block';
 });
 class ErrorTracker {
     constructor() {
@@ -1716,9 +1720,29 @@ const wrongQuestionsList = document.getElementById('wrong-questions-list');
 const exportWrongQuestionsBtn = document.getElementById('export-wrong-questions');
 const startWrongQuestionsTrainingBtn = document.getElementById('start-wrong-questions-training');
 
+
+// 題庫瀏覽元素
+const questionBankBtn = document.getElementById('question-bank-btn');
+const questionBankModal = document.getElementById('question-bank-modal');
+const closeQuestionBank = document.getElementById('close-question-bank');
+const closeQuestionBankBtn = document.getElementById('close-question-bank-btn');
+const questionBankList = document.getElementById('question-bank-list');
+const questionBankStats = document.getElementById('question-bank-stats');
+const questionSearch = document.getElementById('question-search');
+const filterCategory1 = document.getElementById('filter-category1');
+const filterCategory2 = document.getElementById('filter-category2');
+const sortQuestions = document.getElementById('sort-questions');
+const exportQuestionBankBtn = document.getElementById('export-question-bank');
+
 // 模擬考專用再考一次按鈕
 const examRetryBtn = document.getElementById('exam-retry-btn');
 examRetryBtn.addEventListener('click', retryExam);
+
+// 分階段交卷元素
+const category1SubmitBtn = document.getElementById('category1-submit-btn');
+
+// 事件監聽器
+category1SubmitBtn.addEventListener('click', submitCategory1);
 
 // 事件監聽器
 analysisBtn.addEventListener('click', showAnalysisReport);
@@ -1748,15 +1772,260 @@ examModeBtn.addEventListener('click', () => switchMode('exam'));
 // 模擬考提交按鈕事件
 examSubmitBtn.addEventListener('click', submitExam);
 
+// 事件監聽器
+questionBankBtn.addEventListener('click', showQuestionBank);
+closeQuestionBank.addEventListener('click', hideQuestionBank);
+closeQuestionBankBtn.addEventListener('click', hideQuestionBank);
+questionSearch.addEventListener('input', debounce(renderQuestionBank, 300));
+filterCategory1.addEventListener('change', renderQuestionBank);
+filterCategory2.addEventListener('change', renderQuestionBank);
+sortQuestions.addEventListener('change', renderQuestionBank);
+exportQuestionBankBtn.addEventListener('click', exportQuestionBank);
+
+
 // 新增：鍵盤快捷鍵支持
 document.addEventListener('keydown', handleKeyboardShortcuts);
 
 // 點擊模態框外部關閉
 window.addEventListener('click', (e) => {
+    if (e.target === questionBankModal) hideQuestionBank();
     if (e.target === wrongQuestionsModal) hideWrongQuestionsModal();
     if (e.target === analysisModal) hideAnalysisModal();
     if (e.target === customQuizModal) hideCustomQuizModal();
 });
+
+// 追蹤類別進度
+function trackCategoryProgress() {
+    if (currentMode !== 'practice') return;
+    
+    const category1Questions = questions.filter(q => q.category === 1);
+    const category2Questions = questions.filter(q => q.category === 2);
+    
+    const category1Answered = category1Questions.filter((q, index) => {
+        const globalIndex = questions.findIndex(question => question.id === q.id);
+        return userAnswers[globalIndex] !== null;
+    }).length;
+    
+    const category2Answered = category2Questions.filter((q, index) => {
+        const globalIndex = questions.findIndex(question => question.id === q.id);
+        return userAnswers[globalIndex] !== null;
+    }).length;
+    
+    const category1Complete = category1Answered === category1Questions.length;
+    const category2Complete = category2Answered === category2Questions.length;
+    
+    return {
+        category1: {
+            total: category1Questions.length,
+            answered: category1Answered,
+            complete: category1Complete,
+            progress: (category1Answered / category1Questions.length) * 100
+        },
+        category2: {
+            total: category2Questions.length,
+            answered: category2Answered,
+            complete: category2Complete,
+            progress: (category2Answered / category2Questions.length) * 100
+        }
+    };
+}
+
+// 顯示題庫瀏覽模態框
+function showQuestionBank() {
+    renderQuestionBankStats();
+    renderQuestionBank();
+    questionBankModal.classList.add('show');
+}
+
+// 隱藏題庫瀏覽模態框
+function hideQuestionBank() {
+    questionBankModal.classList.remove('show');
+}
+
+// 渲染題庫統計資訊
+function renderQuestionBankStats() {
+    const category1Count = questions.filter(q => q.category === 1).length;
+    const category2Count = questions.filter(q => q.category === 2).length;
+    
+    questionBankStats.innerHTML = `
+        <div class="question-bank-stat">
+            <div class="question-bank-stat-value">${questions.length}</div>
+            <div class="question-bank-stat-label">總題數</div>
+        </div>
+        <div class="question-bank-stat">
+            <div class="question-bank-stat-value">${category1Count}</div>
+            <div class="question-bank-stat-label">AI發展歷程</div>
+        </div>
+        <div class="question-bank-stat">
+            <div class="question-bank-stat-value">${category2Count}</div>
+            <div class="question-bank-stat-label">AI應用領域</div>
+        </div>
+        <div class="question-bank-stat">
+            <div class="question-bank-stat-value">2</div>
+            <div class="question-bank-stat-label">題目類別</div>
+        </div>
+    `;
+}
+
+// 渲染題庫列表
+function renderQuestionBank() {
+    const searchTerm = questionSearch.value.toLowerCase();
+    const showCategory1 = filterCategory1.checked;
+    const showCategory2 = filterCategory2.checked;
+    const sortBy = sortQuestions.value;
+    
+    // 篩選題目
+    let filteredQuestions = questions.filter(question => {
+        const matchesSearch = searchTerm === '' || 
+            question.text.toLowerCase().includes(searchTerm) ||
+            question.options.some(opt => opt.toLowerCase().includes(searchTerm)) ||
+            question.explanation.toLowerCase().includes(searchTerm);
+        
+        const matchesCategory = 
+            (showCategory1 && question.category === 1) ||
+            (showCategory2 && question.category === 2);
+        
+        return matchesSearch && matchesCategory;
+    });
+    
+    // 排序題目
+    if (sortBy === 'id') {
+        filteredQuestions.sort((a, b) => a.id.localeCompare(b.id));
+    } else if (sortBy === 'category') {
+        filteredQuestions.sort((a, b) => {
+            if (a.category !== b.category) return a.category - b.category;
+            return a.id.localeCompare(b.id);
+        });
+    }
+    
+    // 渲染題目列表
+    if (filteredQuestions.length === 0) {
+        questionBankList.innerHTML = `
+            <div class="question-bank-empty">
+                <div style="text-align: center; padding: 40px; color: #a0aec0;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🔍</div>
+                    <div style="font-size: 1.2rem; margin-bottom: 10px;">沒有找到符合條件的題目</div>
+                    <div>請嘗試調整搜尋關鍵字或篩選條件</div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    questionBankList.innerHTML = filteredQuestions.map((question, index) => {
+        const categoryName = question.category === 1 ? 
+            '第一類：AI 發展歷程與生態系' : 
+            '第二類：AI 應用領域與產業發展';
+        
+        return `
+            <div class="question-bank-item fade-in" style="animation-delay: ${index * 0.05}s">
+                <div class="question-bank-header">
+                    <div class="question-bank-id">${question.id}</div>
+                    <div class="question-bank-category">${categoryName}</div>
+                </div>
+                
+                <div class="question-bank-text">
+                    ${question.text}
+                </div>
+                
+                <div class="question-bank-options">
+                    ${question.options.map((option, optIndex) => `
+                        <div class="question-bank-option ${optIndex === question.correctAnswer ? 'correct' : ''}">
+                            ${option} ${optIndex === question.correctAnswer ? '✅' : ''}
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div class="question-bank-explanation">
+                    <strong>詳解：</strong>${question.explanation}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // 更新統計資訊顯示實際篩選後的數量
+    updateFilteredStats(filteredQuestions.length);
+}
+
+// 更新篩選後的統計資訊
+function updateFilteredStats(filteredCount) {
+    const stats = questionBankStats.querySelectorAll('.question-bank-stat');
+    if (stats[0]) {
+        const valueElement = stats[0].querySelector('.question-bank-stat-value');
+        valueElement.textContent = filteredCount;
+        valueElement.style.color = filteredCount === questions.length ? '#4299e1' : '#ed8936';
+    }
+}
+
+// 匯出題庫
+function exportQuestionBank() {
+    const searchTerm = questionSearch.value.toLowerCase();
+    const showCategory1 = filterCategory1.checked;
+    const showCategory2 = filterCategory2.checked;
+    
+    // 獲取當前篩選後的題目
+    let exportQuestions = questions.filter(question => {
+        const matchesSearch = searchTerm === '' || 
+            question.text.toLowerCase().includes(searchTerm) ||
+            question.options.some(opt => opt.toLowerCase().includes(searchTerm)) ||
+            question.explanation.toLowerCase().includes(searchTerm);
+        
+        const matchesCategory = 
+            (showCategory1 && question.category === 1) ||
+            (showCategory2 && question.category === 2);
+        
+        return matchesSearch && matchesCategory;
+    });
+    
+    if (exportQuestions.length === 0) {
+        showAlert('沒有題目可以匯出', '提示');
+        return;
+    }
+    
+    const content = generateQuestionBankExportContent(exportQuestions);
+    const blob = new Blob([content], {
+        type: 'text/plain;charset=utf-8'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `TQC_AI_題庫_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showAlert(`題庫已成功匯出！共 ${exportQuestions.length} 題`, '匯出成功');
+}
+
+// 生成題庫匯出內容
+function generateQuestionBankExportContent(exportQuestions) {
+    let content = `TQC 人工智慧應用與技術 - 完整題庫\n`;
+    content += `匯出時間: ${new Date().toLocaleString()}\n`;
+    content += `題目數量: ${exportQuestions.length}\n`;
+    content += `========================================\n\n`;
+    
+    exportQuestions.forEach((question, index) => {
+        const categoryName = question.category === 1 ? 
+            '第一類：AI 發展歷程與生態系' : 
+            '第二類：AI 應用領域與產業發展';
+            
+        content += `題目 ${index + 1}: ${question.id}\n`;
+        content += `所屬類別: ${categoryName}\n\n`;
+        content += `題目:\n${question.text}\n\n`;
+        content += `選項:\n`;
+        question.options.forEach((option, optIndex) => {
+            const correctMark = optIndex === question.correctAnswer ? ' (正確答案)' : '';
+            content += `${option}${correctMark}\n`;
+        });
+        content += `\n詳解:\n${question.explanation}\n`;
+        content += `\n${'='.repeat(40)}\n\n`;
+    });
+    
+    content += `\n祝您學習順利！`;
+    
+    return content;
+}
 
 // 再考一次功能
 function retryExam() {
@@ -1782,6 +2051,9 @@ function retryExam() {
             examSubmitBtn.disabled = false;
             examSubmitBtn.style.display = 'inline-block';
             examRetryBtn.style.display = 'none';
+
+            // 確保題庫瀏覽按鈕隱藏
+            questionBankBtn.style.display = 'none';
 
             // 重置題目列表
             initializeExamQuestionList();
@@ -3536,6 +3808,9 @@ function switchMode(mode) {
     practiceModeBtn.classList.toggle('active', mode === 'practice');
     examModeBtn.classList.toggle('active', mode === 'exam');
 
+    // 新增：根據模式顯示/隱藏題庫瀏覽按鈕
+    questionBankBtn.style.display = mode === 'exam' ? 'none' : 'inline-block';
+
     // 啟用所有功能
     enableAllFunctions();
 
@@ -3544,7 +3819,7 @@ function switchMode(mode) {
     examSubmitBtn.style.display = mode === 'exam' ? 'inline-block' : 'none';
     submitBtn.style.display = mode === 'exam' ? 'none' : 'inline-block';
     
-    // 新增：重置再考一次按鈕狀態
+    // 重置再考一次按鈕狀態
     examRetryBtn.style.display = 'none';
 
     // 顯示/隱藏題目列表
@@ -3579,13 +3854,16 @@ function initializeExam() {
     // 隱藏題目列表
     questionListElement.style.display = 'none';
 
+    // 新增：隱藏題庫瀏覽按鈕
+    questionBankBtn.style.display = 'none';
+
     // 隨機選擇50題
     examQuestions = getRandomQuestions(50);
 
     // 更新題目計數顯示
     examQuestionCountElement.textContent = examQuestions.length;
 
-    // 新增：重置按鈕狀態
+    // 重置按鈕狀態
     examSubmitBtn.disabled = false;
     examSubmitBtn.style.display = 'inline-block';
     examRetryBtn.style.display = 'none';
@@ -3852,10 +4130,13 @@ function performExamSubmission() {
         showExamResult();
         saveProgress();
 
-        // 新增：顯示再考一次按鈕，禁用提前交卷按鈕
+        // 顯示再考一次按鈕，禁用提前交卷按鈕
         examSubmitBtn.disabled = true;
         examSubmitBtn.style.display = 'none';
         examRetryBtn.style.display = 'inline-block';
+
+        // 注意：題庫瀏覽按鈕仍然保持隱藏狀態
+        // 用戶需要切換回練習模式才能使用題庫瀏覽功能
 
     } catch (error) {
         console.error('交卷時發生錯誤:', error);
@@ -4026,7 +4307,7 @@ function highlightCurrentQuestion() {
     });
 }
 
-// 重置為練習模式
+// 在 resetToPracticeMode() 中重置分階段交卷狀態
 function resetToPracticeMode() {
     isExamStarted = false;
     isExamFinished = false;
@@ -4042,10 +4323,24 @@ function resetToPracticeMode() {
     // 確保題目列表顯示
     questionListElement.style.display = 'block';
 
+    // 顯示題庫瀏覽按鈕
+    questionBankBtn.style.display = 'inline-block';
+
+    // 重置分階段交卷按鈕
+    category1SubmitBtn.style.display = 'none';
+    category1SubmitBtn.disabled = false;
+    category1SubmitBtn.textContent = '✅ 完成第一類交卷';
+
+    // 移除類別進度顯示
+    const progressElement = document.getElementById('category-progress');
+    if (progressElement) {
+        progressElement.remove();
+    }
+
     // 重置類別標題和顯示
     resetCategoryTitles();
 
-    // 新增：重置模擬考按鈕狀態
+    // 重置模擬考按鈕狀態
     examSubmitBtn.disabled = false;
     examSubmitBtn.style.display = 'none';
     examRetryBtn.style.display = 'none';
@@ -4304,6 +4599,226 @@ function updateNavigationButtons() {
     nextBtn.disabled = currentQuestionIndex === totalQuestions - 1;
 }
 
+// 提交第一類答案
+function submitCategory1() {
+    const progress = trackCategoryProgress();
+    
+    if (!progress.category1.complete) {
+        showAlert('請先完成第一類所有題目！', '提示');
+        return;
+    }
+
+    showConfirm(
+        '確定要提交第一類答案嗎？\n\n' +
+        '✅ 第一類: ' + progress.category1.answered + '/' + progress.category1.total + ' 題已完成\n' +
+        '📝 第二類: ' + progress.category2.answered + '/' + progress.category2.total + ' 題待完成\n\n' +
+        '提交後將顯示第一類測驗結果，第二類可繼續作答。',
+        '提交第一類答案',
+        () => {
+            performCategory1Submission();
+        },
+        () => {
+            // 用戶取消
+        }
+    );
+}
+
+// 執行第一類交卷
+function performCategory1Submission() {
+    // 計算第一類分數
+    const category1Questions = questions.filter(q => q.category === 1);
+    let category1Score = 0;
+    let category1WrongAnswers = [];
+    
+    category1Questions.forEach(question => {
+        const globalIndex = questions.findIndex(q => q.id === question.id);
+        if (userAnswers[globalIndex] === question.correctAnswer) {
+            category1Score++;
+        } else {
+            category1WrongAnswers.push({
+                id: question.id,
+                question: question.text,
+                userAnswer: userAnswers[globalIndex] !== null ? 
+                    question.options[userAnswers[globalIndex]] : '未作答',
+                correctAnswer: question.options[question.correctAnswer],
+                explanation: question.explanation,
+                originalIndex: globalIndex
+            });
+        }
+    });
+    
+    // 顯示第一類結果
+    showCategory1Result(category1Score, category1WrongAnswers);
+    
+    // 禁用第一類交卷按鈕
+    category1SubmitBtn.disabled = true;
+    category1SubmitBtn.textContent = '✅ 第一類已交卷';
+    
+    // 更新學習記錄（部分更新）
+    updatePartialLearningHistory('category1', category1Score, category1Questions.length);
+}
+
+// 顯示第一類結果
+function showCategory1Result(score, wrongAnswers) {
+    const resultPanel = document.getElementById('result-panel');
+    const resultContent = document.getElementById('result-content');
+    
+    const totalQuestions = questions.filter(q => q.category === 1).length;
+    const percentage = Math.round((score / totalQuestions) * 100);
+    const isPass = percentage >= 60; // 設定60%為及格線
+
+    let resultHTML = `
+        <div class="category-result-panel fade-in">
+            <div class="category-result-header">
+                <span style="font-size: 1.5rem;">✅</span>
+                <h4>第一類測驗結果 - AI 發展歷程與生態系</h4>
+            </div>
+            
+            <div class="category-result-stats">
+                <div class="category-result-stat">
+                    <div class="category-result-value">${score}/${totalQuestions}</div>
+                    <div class="category-result-label">答對題數</div>
+                </div>
+                <div class="category-result-stat">
+                    <div class="category-result-value">${percentage}%</div>
+                    <div class="category-result-label">正確率</div>
+                </div>
+                <div class="category-result-stat">
+                    <div class="category-result-value">${wrongAnswers.length}</div>
+                    <div class="category-result-label">錯誤題數</div>
+                </div>
+                <div class="category-result-stat">
+                    <div class="category-result-value" style="color: ${isPass ? '#38a169' : '#e53e3e'}">
+                        ${isPass ? '合格' : '待加強'}
+                    </div>
+                    <div class="category-result-label">評定結果</div>
+                </div>
+            </div>
+            
+            <div style="text-align: center; color: #22543d; margin: 15px 0;">
+                <strong>${isPass ? '🎉 第一類測驗通過！' : '💪 請繼續加強第一類知識點'}</strong>
+                <div style="font-size: 0.9rem; margin-top: 5px;">
+                    第二類題目可繼續作答，完成後可提交全部答案
+                </div>
+            </div>
+    `;
+
+    if (wrongAnswers.length > 0) {
+        resultHTML += `
+            <div style="margin-top: 15px;">
+                <h5 style="color: #742a2a; margin-bottom: 10px;">📝 第一類錯誤題目</h5>
+                ${wrongAnswers.map((item, index) => `
+                    <div class="wrong-answer-summary fade-in" style="animation-delay: ${index * 0.1}s" 
+                         data-question-index="${item.originalIndex}" onclick="jumpToQuestion(${item.originalIndex})">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #fff5f5; border-radius: 6px; margin: 5px 0; cursor: pointer; border-left: 3px solid #e53e3e;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #742a2a; font-size: 0.9rem;">題目 ${item.id}</div>
+                                <div style="font-size: 0.8rem; color: #a0aec0; margin-top: 2px;">點擊查看詳解</div>
+                            </div>
+                            <div style="color: #4299e1; font-size: 1.1rem;">🔍</div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    resultHTML += `
+            <div class="category-result-actions">
+                <button class="btn-secondary" onclick="continueToCategory2()" style="font-size: 0.9rem; padding: 8px 16px;">
+                    ➡️ 繼續第二類測驗
+                </button>
+                <button class="btn-primary" onclick="reviewCategory1WrongAnswers()" style="font-size: 0.9rem; padding: 8px 16px;">
+                    📚 複習第一類錯題
+                </button>
+            </div>
+        </div>
+    `;
+
+    resultContent.innerHTML = resultHTML;
+    resultPanel.style.display = 'block';
+
+    // 滾動到結果面板
+    setTimeout(() => {
+        resultPanel.scrollIntoView({
+            behavior: 'smooth'
+        });
+    }, 100);
+}
+
+// 繼續第二類測驗
+function continueToCategory2() {
+    // 找到第二類的第一題
+    const category2Questions = questions.filter(q => q.category === 2);
+    if (category2Questions.length > 0) {
+        const firstCategory2Question = category2Questions[0];
+        const globalIndex = questions.findIndex(q => q.id === firstCategory2Question.id);
+        
+        currentQuestionIndex = globalIndex;
+        safeDisplayQuestion();
+        highlightCurrentQuestion();
+        
+        // 隱藏結果面板
+        document.getElementById('result-panel').style.display = 'none';
+    }
+}
+
+// 複習第一類錯題
+function reviewCategory1WrongAnswers() {
+    const category1Questions = questions.filter(q => q.category === 1);
+    const wrongQuestions = [];
+    
+    category1Questions.forEach(question => {
+        const globalIndex = questions.findIndex(q => q.id === question.id);
+        if (userAnswers[globalIndex] !== question.correctAnswer) {
+            wrongQuestions.push({
+                question: question,
+                originalIndex: globalIndex
+            });
+        }
+    });
+    
+    if (wrongQuestions.length === 0) {
+        showAlert('第一類沒有錯誤題目！', '提示');
+        return;
+    }
+    
+    // 進入弱點訓練模式（使用現有功能）
+    weaknessMode = true;
+    weaknessQuestions = wrongQuestions;
+    weaknessCurrentQuestionIndex = 0;
+    
+    weaknessModeBtn.style.display = 'inline-block';
+    document.getElementById('result-panel').style.display = 'none';
+    
+    showWeaknessTrainingInfo();
+    displayWeaknessQuestion();
+}
+
+// 更新部分學習記錄
+function updatePartialLearningHistory(category, score, total) {
+    if (!learningHistory.partialSessions) {
+        learningHistory.partialSessions = [];
+    }
+    
+    const sessionRecord = {
+        date: new Date().toISOString(),
+        category: category,
+        score: score,
+        total: total,
+        percentage: Math.round((score / total) * 100)
+    };
+    
+    learningHistory.partialSessions.push(sessionRecord);
+    
+    // 限制記錄數量
+    if (learningHistory.partialSessions.length > 20) {
+        learningHistory.partialSessions = learningHistory.partialSessions.slice(-20);
+    }
+    
+    saveLearningHistory();
+}
+
 // 更新進度和分數
 function updateProgressAndScore() {
     const currentQuestions = currentMode === 'exam' ? examQuestions : questions;
@@ -4351,20 +4866,70 @@ function updateProgressAndScore() {
         }
     }
 
-    // 檢查是否所有題目都已回答
-    const allAnswered = currentAnswers.every(answer => answer !== null);
-    const totalCount = currentMode === 'exam' ? examQuestions.length : questions.length;
-    const isComplete = answeredCount === totalCount;
-
-    // 更新提交按鈕狀態
-    if (currentMode === 'exam') {
-        examSubmitBtn.disabled = false;
-        submitBtn.style.display = 'none';
+    // 新增：分階段交卷邏輯
+    if (currentMode === 'practice' && !isExamFinished) {
+        const progress = trackCategoryProgress();
+        
+        // 顯示/隱藏第一類完成交卷按鈕
+        if (progress.category1.complete && !progress.category2.complete) {
+            category1SubmitBtn.style.display = 'inline-block';
+            category1SubmitBtn.disabled = false;
+        } else {
+            category1SubmitBtn.style.display = 'none';
+        }
+        
+        // 更新提交按鈕文字
+        const allAnswered = answeredCount === totalQuestions;
+        submitBtn.disabled = !allAnswered;
+        submitBtn.textContent = allAnswered ? '提交全部答案' : '請完成所有題目';
+        
+        // 顯示類別進度（可選）
+        displayCategoryProgress(progress);
     } else {
-        submitBtn.disabled = !isComplete || isExamFinished;
-        submitBtn.textContent = isExamFinished ? '測驗已完成' :
-            isComplete ? '提交答案' : '請完成所有題目';
+        category1SubmitBtn.style.display = 'none';
     }
+}
+
+// 顯示類別進度
+function displayCategoryProgress(progress) {
+    let progressElement = document.getElementById('category-progress');
+    
+    if (!progressElement) {
+        progressElement = document.createElement('div');
+        progressElement.id = 'category-progress';
+        progressElement.className = 'category-progress';
+        
+        // 插入到進度條後面
+        const progressContainer = document.querySelector('.progress-container');
+        progressContainer.parentNode.insertBefore(progressElement, progressContainer.nextSibling);
+    }
+    
+    progressElement.innerHTML = `
+        <div class="category-progress-header">
+            <div class="category-progress-title">類別進度</div>
+            <div class="category-progress-stats">
+                第一類: ${progress.category1.answered}/${progress.category1.total} 
+                | 第二類: ${progress.category2.answered}/${progress.category2.total}
+            </div>
+        </div>
+        <div class="category-progress-bars">
+            <div class="category-progress-bar">
+                <div class="category-progress-fill" style="width: ${progress.category1.progress}%"></div>
+            </div>
+            <div class="category-progress-bar category2">
+                <div class="category-progress-fill" style="width: ${progress.category2.progress}%"></div>
+            </div>
+        </div>
+        <div class="category-progress-labels">
+            <span>AI發展歷程</span>
+            <span>AI應用領域</span>
+        </div>
+        ${progress.category1.complete && !progress.category2.complete ? `
+            <div style="text-align: center; margin-top: 10px;">
+                <small style="color: #38a169;">✅ 第一類已完成！可選擇交卷或繼續完成第二類</small>
+            </div>
+        ` : ''}
+    `;
 }
 
 // 更新反饋訊息
@@ -4698,9 +5263,14 @@ function applySavedProgress(progress) {
                     questions.find(q => q.id === id)
                 ).filter(q => q);
 
+                // 新增：隱藏題庫瀏覽按鈕
+                questionBankBtn.style.display = 'none';
+
                 initializeExamQuestionList();
                 startExamTimer();
             } else {
+                // 新增：顯示題庫瀏覽按鈕
+                questionBankBtn.style.display = 'inline-block';
                 initializeQuestionList();
             }
 

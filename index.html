@@ -152,6 +152,54 @@
         </div>
     </div>
 
+    <!-- 題庫瀏覽模態框 -->
+<div class="modal" id="question-bank-modal">
+    <div class="modal-content" style="max-width: 900px;">
+        <div class="modal-header">
+            <h2>📖 題庫瀏覽</h2>
+            <span class="close" id="close-question-bank">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="question-bank-panel">
+                <!-- 搜尋和篩選區域 -->
+                <div class="question-bank-filter">
+                    <div class="search-box">
+                        <input type="text" id="question-search" placeholder="搜尋題目內容..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <div class="filter-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="filter-category1" checked> 
+                            第一類：AI 發展歷程與生態系
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="filter-category2" checked> 
+                            第二類：AI 應用領域與產業發展
+                        </label>
+                        <select id="sort-questions" style="padding: 8px; border: 1px solid #ddd; border-radius: 5px;">
+                            <option value="id">按題號排序</option>
+                            <option value="category">按類別排序</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 統計資訊 -->
+                <div class="question-bank-stats" id="question-bank-stats">
+                    <!-- 統計數據將由JS生成 -->
+                </div>
+                
+                <!-- 題目列表 -->
+                <div class="question-bank-list" id="question-bank-list">
+                    <!-- 題目列表將由JS生成 -->
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-secondary" id="export-question-bank">匯出題庫</button>
+            <button class="btn-primary" id="close-question-bank-btn">關閉</button>
+        </div>
+    </div>
+</div>
+
     <!-- 新增功能按鈕區域 -->
     <div class="feature-buttons">
         <button class="feature-btn" id="analysis-btn">
@@ -162,6 +210,10 @@
         </button>
         <button class="feature-btn" id="wrong-questions-btn">
             📚 智慧錯題本
+        </button>
+        <!-- 新增題庫瀏覽按鈕 -->
+        <button class="feature-btn" id="question-bank-btn">
+            📖 題庫瀏覽
         </button>
     </div>
 
@@ -266,13 +318,23 @@
                 <div class="navigation">
                     <button class="prev-btn" id="prev-btn">上一題</button>
                     <button class="next-btn" id="next-btn">下一題</button>
+                    
+                    <!-- 練習模式專用提交按鈕 -->
                     <button class="submit-btn" id="submit-btn" disabled>提交答案</button>
-                    <!-- 新增弱點訓練按鈕 -->
+                    
+                    <!-- 新增：第一類完成交卷按鈕 -->
+                    <button class="category-submit-btn" id="category1-submit-btn" style="display: none;">
+                        ✅ 完成第一類交卷
+                    </button>
+                    
+                    <!-- 弱點訓練按鈕 -->
                     <button class="weakness-mode-btn" id="weakness-mode-btn" style="display: none;">
                         🎯 弱點訓練模式
                     </button>
+                    
                     <!-- 模擬考專用提交按鈕 -->
                     <button class="exam-submit-btn" id="exam-submit-btn" style="display: none;">提前交卷</button>
+                    
                     <!-- 模擬考專用再考一次按鈕 -->
                     <button class="exam-retry-btn" id="exam-retry-btn" style="display: none;">再考一次</button>
                 </div>
