@@ -939,9 +939,6 @@ const questions = [
         explanation: "「平等醫療」旨在解決因社會經濟不平等而導致的醫療資源不均問題。人工智慧可以在這個概念下扮演對病人進行初步診斷的角色。透過 AI 進行初步診斷，可以讓醫療資源更公平地分配，使貧窮地區的人也能獲得基本的醫療協助。"
     }
 ];
-// 在文件開頭，questions 數組之後添加
-let touchGestureHandler;
-let accessibilityManager;
 
 // 在 DOMContentLoaded 事件中初始化
 document.addEventListener('DOMContentLoaded', () => {
@@ -950,8 +947,9 @@ document.addEventListener('DOMContentLoaded', () => {
     touchGestureHandler = new TouchGestureHandler();
     accessibilityManager = new AccessibilityManager();
 
-    // 載入錯題歷史
+    // 載入錯題歷史和學習記錄
     loadWrongQuestionsHistory();
+    loadLearningHistory();
 
     // 確保功能按鈕在容器內
     const container = document.querySelector('.container');
@@ -1608,6 +1606,21 @@ let weaknessStats = {
 };
 let alertConfirm = document.getElementById('alert-confirm');
 let alertCancel = document.getElementById('alert-cancel');
+let touchGestureHandler;
+let accessibilityManager;
+let learningHistory = {
+    totalSessions: 0,
+    totalStudyTime: 0, // 分鐘
+    totalQuestionsAnswered: 0,
+    totalCorrectAnswers: 0,
+    categoryStats: {
+        1: { answered: 0, correct: 0 },
+        2: { answered: 0, correct: 0 }
+    },
+    sessionHistory: [],
+    firstStudyDate: null,
+    lastStudyDate: null
+};
 
 // 自定義測驗狀態
 let customQuizQuestions = [];
@@ -1703,6 +1716,10 @@ const wrongQuestionsList = document.getElementById('wrong-questions-list');
 const exportWrongQuestionsBtn = document.getElementById('export-wrong-questions');
 const startWrongQuestionsTrainingBtn = document.getElementById('start-wrong-questions-training');
 
+// 模擬考專用再考一次按鈕
+const examRetryBtn = document.getElementById('exam-retry-btn');
+examRetryBtn.addEventListener('click', retryExam);
+
 // 事件監聽器
 analysisBtn.addEventListener('click', showAnalysisReport);
 customQuizBtn.addEventListener('click', showCustomQuizModal);
@@ -1740,6 +1757,367 @@ window.addEventListener('click', (e) => {
     if (e.target === analysisModal) hideAnalysisModal();
     if (e.target === customQuizModal) hideCustomQuizModal();
 });
+
+// 再考一次功能
+function retryExam() {
+    showConfirm(
+        '確定要重新開始模擬考嗎？\n\n將重新隨機抽取50題，計時40分鐘。',
+        '再考一次',
+        () => {
+            // 重置考試狀態
+            isExamFinished = false;
+            isExamStarted = true;
+            examTimeLeft = 40 * 60;
+            userAnswers = new Array(50).fill(null);
+            score = 0;
+            currentQuestionIndex = 0;
+
+            // 重新隨機選擇50題
+            examQuestions = getRandomQuestions(50);
+
+            // 更新題目計數顯示
+            examQuestionCountElement.textContent = examQuestions.length;
+
+            // 重置按鈕狀態
+            examSubmitBtn.disabled = false;
+            examSubmitBtn.style.display = 'inline-block';
+            examRetryBtn.style.display = 'none';
+
+            // 重置題目列表
+            initializeExamQuestionList();
+
+            // 隱藏結果面板
+            document.getElementById('result-panel').style.display = 'none';
+
+            // 隱藏題目列表（模擬考進行中）
+            questionListElement.style.display = 'none';
+
+            // 重置類別標題
+            resetCategoryTitles();
+
+            // 開始計時器
+            startExamTimer();
+
+            // 顯示第一題
+            safeDisplayQuestion();
+
+            // 重置進度和分數顯示
+            updateProgressAndScore();
+
+            // 隱藏弱點面板（如果顯示）
+            weaknessPanel.style.display = 'none';
+
+            showAlert('模擬考重新開始！祝您考試順利！', '再考一次');
+        },
+        () => {
+            // 用戶取消
+        }
+    );
+}
+
+// 載入學習記錄
+function loadLearningHistory() {
+    try {
+        const saved = localStorage.getItem('tqc-ai-learning-history');
+        if (saved) {
+            const history = JSON.parse(saved);
+            learningHistory = { ...learningHistory, ...history };
+            
+            // 確保類別統計存在
+            if (!learningHistory.categoryStats) {
+                learningHistory.categoryStats = {
+                    1: { answered: 0, correct: 0 },
+                    2: { answered: 0, correct: 0 }
+                };
+            }
+        }
+    } catch (error) {
+        console.warn('無法載入學習記錄:', error);
+    }
+}
+
+// 保存學習記錄
+function saveLearningHistory() {
+    try {
+        localStorage.setItem('tqc-ai-learning-history', JSON.stringify(learningHistory));
+    } catch (error) {
+        console.warn('無法保存學習記錄:', error);
+    }
+}
+
+// 更新學習記錄（在提交測驗時調用）
+function updateLearningHistory() {
+    const currentQuestions = currentMode === 'exam' ? examQuestions : questions;
+    const currentAnswers = currentMode === 'exam' ? userAnswers : userAnswers;
+    
+    // 更新基本統計
+    learningHistory.totalSessions++;
+    
+    // 計算本次測驗的統計
+    let sessionCorrect = 0;
+    let sessionAnswered = 0;
+    const sessionCategoryStats = {
+        1: { answered: 0, correct: 0 },
+        2: { answered: 0, correct: 0 }
+    };
+    
+    currentQuestions.forEach((question, index) => {
+        if (currentAnswers[index] !== null) {
+            sessionAnswered++;
+            learningHistory.totalQuestionsAnswered++;
+            
+            if (currentAnswers[index] === question.correctAnswer) {
+                sessionCorrect++;
+                learningHistory.totalCorrectAnswers++;
+                
+                // 更新類別統計
+                if (learningHistory.categoryStats[question.category]) {
+                    learningHistory.categoryStats[question.category].correct++;
+                }
+            }
+            
+            // 更新類別回答統計
+            if (learningHistory.categoryStats[question.category]) {
+                learningHistory.categoryStats[question.category].answered++;
+            }
+        }
+    });
+    
+    // 計算學習時間（簡單估算）
+    const studyTime = currentMode === 'exam' ? 
+        Math.max(1, Math.round((40 * 60 - examTimeLeft) / 60)) : 
+        Math.max(1, Math.round(sessionAnswered * 0.5)); // 估算每題30秒
+    
+    learningHistory.totalStudyTime += studyTime;
+    
+    // 記錄本次學習 session
+    const sessionRecord = {
+        date: new Date().toISOString(),
+        mode: currentMode,
+        questionsAnswered: sessionAnswered,
+        correctAnswers: sessionCorrect,
+        score: currentMode === 'exam' ? score : Math.round((sessionCorrect / sessionAnswered) * 100),
+        studyTime: studyTime,
+        categoryStats: { ...sessionCategoryStats }
+    };
+    
+    learningHistory.sessionHistory.push(sessionRecord);
+    
+    // 限制歷史記錄數量
+    if (learningHistory.sessionHistory.length > 50) {
+        learningHistory.sessionHistory = learningHistory.sessionHistory.slice(-50);
+    }
+    
+    // 更新首次和最後學習日期
+    if (!learningHistory.firstStudyDate) {
+        learningHistory.firstStudyDate = new Date().toISOString();
+    }
+    learningHistory.lastStudyDate = new Date().toISOString();
+    
+    saveLearningHistory();
+}
+
+// 更新生成分析報告的函數
+function generateAnalysisContent() {
+    const stats = generateCumulativeStatistics();
+    const recommendations = generateRecommendations(stats);
+    const errorStats = generateErrorStats();
+    const progressTrend = generateProgressTrend();
+
+    analysisContent.innerHTML = errorStats + `
+        <div class="analysis-section">
+            <h3>📈 整體學習進度（累積統計）</h3>
+            <div class="analysis-grid">
+                <div class="analysis-card">
+                    <div class="analysis-value">${learningHistory.totalSessions}</div>
+                    <div class="analysis-label">學習次數</div>
+                </div>
+                <div class="analysis-card ${stats.overallAccuracy >= 70 ? 'success' : 'warning'}">
+                    <div class="analysis-value">${stats.overallAccuracy}%</div>
+                    <div class="analysis-label">累積正確率</div>
+                </div>
+                <div class="analysis-card">
+                    <div class="analysis-value">${Math.round(learningHistory.totalStudyTime / 60)}</div>
+                    <div class="analysis-label">學習時數</div>
+                </div>
+                <div class="analysis-card">
+                    <div class="analysis-value">${stats.weakAreas}</div>
+                    <div class="analysis-label">弱點領域</div>
+                </div>
+            </div>
+            
+            <div class="analysis-subgrid">
+                <div class="analysis-subcard">
+                    <div class="analysis-subvalue">${learningHistory.totalQuestionsAnswered}</div>
+                    <div class="analysis-sublabel">總答題數</div>
+                </div>
+                <div class="analysis-subcard">
+                    <div class="analysis-subvalue">${learningHistory.totalCorrectAnswers}</div>
+                    <div class="analysis-sublabel">總正確數</div>
+                </div>
+                <div class="analysis-subcard">
+                    <div class="analysis-subvalue">${stats.averageSessionScore}%</div>
+                    <div class="analysis-sublabel">平均得分</div>
+                </div>
+            </div>
+        </div>
+
+        ${progressTrend}
+
+        <div class="analysis-section">
+            <h3>📊 類別表現分析（累積）</h3>
+            <div class="progress-chart">
+                ${Object.entries(stats.categoryStats).map(([category, data]) => `
+                    <div class="chart-bar">
+                        <div class="chart-label">${category === '1' ? 'AI發展歷程' : 'AI應用領域'}</div>
+                        <div class="chart-track">
+                            <div class="chart-fill ${data.accuracy < 70 ? 'weak' : ''}" 
+                                 style="width: ${data.accuracy}%"></div>
+                        </div>
+                        <div class="chart-value">${data.accuracy}%</div>
+                        <div class="chart-detail">${data.correct}/${data.answered}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+
+        <div class="analysis-section">
+            <h3>📅 最近學習記錄</h3>
+            <div class="recent-sessions">
+                ${learningHistory.sessionHistory.slice(-5).reverse().map(session => `
+                    <div class="session-item">
+                        <div class="session-date">${new Date(session.date).toLocaleDateString()}</div>
+                        <div class="session-mode">${session.mode === 'exam' ? '模擬考' : '練習'}</div>
+                        <div class="session-score ${session.score >= 70 ? 'good' : 'need-improve'}">
+                            ${session.score}%
+                        </div>
+                        <div class="session-details">
+                            ${session.questionsAnswered}題 / ${session.studyTime}分鐘
+                        </div>
+                    </div>
+                `).join('')}
+                ${learningHistory.sessionHistory.length === 0 ? 
+                    '<div class="no-data">尚無學習記錄</div>' : ''}
+            </div>
+        </div>
+
+        <div class="recommendations">
+            <h4>💡 學習建議</h4>
+            <ul>
+                ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+            </ul>
+        </div>
+        
+        <div class="analysis-footer">
+            <div class="study-period">
+                ${learningHistory.firstStudyDate ? 
+                    `學習期間: ${new Date(learningHistory.firstStudyDate).toLocaleDateString()} - ${new Date(learningHistory.lastStudyDate).toLocaleDateString()}` : 
+                    '開始你的學習之旅吧！'}
+            </div>
+            <button class="btn-secondary" onclick="clearLearningHistory()" style="margin-top: 10px;">
+                清除學習記錄
+            </button>
+        </div>
+    `;
+}
+
+// 生成累積統計數據
+function generateCumulativeStatistics() {
+    const stats = {
+        overallAccuracy: 0,
+        categoryStats: {},
+        weakAreas: 0,
+        averageSessionScore: 0,
+        totalStudyHours: 0,
+        improvement: 0
+    };
+
+    // 計算總體正確率
+    if (learningHistory.totalQuestionsAnswered > 0) {
+        stats.overallAccuracy = Math.round(
+            (learningHistory.totalCorrectAnswers / learningHistory.totalQuestionsAnswered) * 100 * 100
+        ) / 100;
+    }
+
+    // 計算類別統計
+    Object.entries(learningHistory.categoryStats).forEach(([category, data]) => {
+        const accuracy = data.answered > 0 ? 
+            Math.round((data.correct / data.answered) * 100 * 100) / 100 : 0;
+        
+        stats.categoryStats[category] = {
+            accuracy: accuracy,
+            correct: data.correct,
+            answered: data.answered
+        };
+
+        // 識別弱點領域
+        if (accuracy < 70 && data.answered > 0) {
+            stats.weakAreas++;
+        }
+    });
+
+    // 計算平均得分
+    if (learningHistory.sessionHistory.length > 0) {
+        const totalScore = learningHistory.sessionHistory.reduce((sum, session) => 
+            sum + session.score, 0);
+        stats.averageSessionScore = Math.round(totalScore / learningHistory.sessionHistory.length * 100) / 100;
+    }
+
+    // 計算學習時數
+    stats.totalStudyHours = Math.round(learningHistory.totalStudyTime / 60 * 100) / 100;
+
+    // 計算進步幅度（比較最近5次和之前5次）
+    if (learningHistory.sessionHistory.length >= 10) {
+        const recentSessions = learningHistory.sessionHistory.slice(-5);
+        const previousSessions = learningHistory.sessionHistory.slice(-10, -5);
+        
+        const recentAvg = recentSessions.reduce((sum, s) => sum + s.score, 0) / recentSessions.length;
+        const previousAvg = previousSessions.reduce((sum, s) => sum + s.score, 0) / previousSessions.length;
+        
+        stats.improvement = Math.round((recentAvg - previousAvg) * 100) / 100;
+    }
+
+    return stats;
+}
+
+// 生成進步趨勢
+function generateProgressTrend() {
+    if (learningHistory.sessionHistory.length < 2) {
+        return '<div class="analysis-section"><h3>📈 學習趨勢</h3><div class="no-data">需要更多學習記錄來分析趨勢</div></div>';
+    }
+
+    const recentSessions = learningHistory.sessionHistory.slice(-10);
+    const scores = recentSessions.map(s => s.score);
+    const dates = recentSessions.map(s => new Date(s.date).toLocaleDateString().slice(5));
+    
+    // 簡單趨勢分析
+    const firstHalf = scores.slice(0, Math.floor(scores.length / 2));
+    const secondHalf = scores.slice(Math.floor(scores.length / 2));
+    
+    const firstAvg = firstHalf.reduce((a, b) => a + b, 0) / firstHalf.length;
+    const secondAvg = secondHalf.reduce((a, b) => a + b, 0) / secondHalf.length;
+    
+    const trend = secondAvg > firstAvg ? '上升' : secondAvg < firstAvg ? '下降' : '穩定';
+    const trendIcon = trend === '上升' ? '📈' : trend === '下降' ? '📉' : '➡️';
+
+    return `
+        <div class="analysis-section">
+            <h3>📈 學習趨勢</h3>
+            <div class="trend-analysis">
+                <div class="trend-indicator ${trend}">
+                    <span class="trend-icon">${trendIcon}</span>
+                    <span class="trend-text">趨勢${trend}</span>
+                </div>
+                <div class="trend-details">
+                    <div>最近表現: ${Math.round(secondAvg * 100) / 100}%</div>
+                    <div>之前表現: ${Math.round(firstAvg * 100) / 100}%</div>
+                    ${trend !== '穩定' ? 
+                        `<div>進步幅度: ${Math.round(Math.abs(secondAvg - firstAvg) * 100) / 100}%</div>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+}
 
 // 在分析報告中添加錯誤統計
 function generateErrorStats() {
@@ -2440,26 +2818,53 @@ function generateDetailedStatistics() {
 function generateRecommendations(stats) {
     const recommendations = [];
 
-    if (stats.accuracy < 60) {
-        recommendations.push('建議從基礎概念開始複習，加強對基本知識的理解');
-    } else if (stats.accuracy < 80) {
+    // 基於累積正確率的建議
+    if (stats.overallAccuracy < 60) {
+        recommendations.push('建議從基礎概念開始系統性學習，打好基礎');
+        recommendations.push('多進行練習模式，熟悉各類題型');
+    } else if (stats.overallAccuracy < 75) {
         recommendations.push('繼續保持練習，重點關注錯誤題目的複習');
+        recommendations.push('嘗試模擬考試，檢驗學習成果');
+    } else if (stats.overallAccuracy < 85) {
+        recommendations.push('表現良好！可以挑戰更高難度的題目');
+        recommendations.push('定期複習，鞏固已學知識');
     } else {
-        recommendations.push('表現優秀！可以挑戰更高難度的題目或進行模擬考試');
+        recommendations.push('表現優秀！可以幫助其他同學或挑戰進階內容');
     }
 
+    // 基於弱點領域的建議
     if (stats.weakAreas > 0) {
-        recommendations.push(`專注於 ${stats.weaknessDetails.map(w => w.category).join('、')} 的弱點訓練`);
+        const weakCategories = Object.entries(stats.categoryStats)
+            .filter(([_, data]) => data.accuracy < 70 && data.answered > 0)
+            .map(([category]) => category === '1' ? 'AI發展歷程' : 'AI應用領域');
+        
+        if (weakCategories.length > 0) {
+            recommendations.push(`專注加強 ${weakCategories.join('、')} 的學習`);
+        }
     }
 
-    if (stats.unanswered > stats.totalQuestions * 0.3) {
-        recommendations.push('請完成更多題目以獲得準確的學習分析');
+    // 基於學習頻率的建議
+    if (learningHistory.totalSessions < 3) {
+        recommendations.push('建議增加學習頻率，每週至少練習2-3次');
+    } else if (learningHistory.totalSessions > 10) {
+        recommendations.push('學習頻率良好！保持規律的學習習慣');
     }
 
-    recommendations.push('定期複習錯誤題目，鞏固學習成果');
-    recommendations.push('建議每週至少進行一次模擬考試檢驗學習效果');
+    // 基於趨勢的建議
+    const recentSessions = learningHistory.sessionHistory.slice(-5);
+    if (recentSessions.length >= 3) {
+        const recentScores = recentSessions.map(s => s.score);
+        const isDeclining = recentScores[recentScores.length - 1] < recentScores[0];
+        if (isDeclining) {
+            recommendations.push('最近成績有所下滑，建議回顧之前的錯題');
+        }
+    }
 
-    return recommendations;
+    // 通用建議
+    recommendations.push('使用錯題本功能定期複習錯誤題目');
+    recommendations.push('設定學習目標，逐步提升正確率');
+
+    return recommendations.slice(0, 6); // 最多顯示6條建議
 }
 
 // 匯出分析報告
@@ -3138,6 +3543,9 @@ function switchMode(mode) {
     examTimerElement.style.display = mode === 'exam' ? 'block' : 'none';
     examSubmitBtn.style.display = mode === 'exam' ? 'inline-block' : 'none';
     submitBtn.style.display = mode === 'exam' ? 'none' : 'inline-block';
+    
+    // 新增：重置再考一次按鈕狀態
+    examRetryBtn.style.display = 'none';
 
     // 顯示/隱藏題目列表
     questionListElement.style.display = mode === 'exam' ? 'none' : 'block';
@@ -3176,6 +3584,11 @@ function initializeExam() {
 
     // 更新題目計數顯示
     examQuestionCountElement.textContent = examQuestions.length;
+
+    // 新增：重置按鈕狀態
+    examSubmitBtn.disabled = false;
+    examSubmitBtn.style.display = 'inline-block';
+    examRetryBtn.style.display = 'none';
 
     // 更新題目列表（雖然隱藏，但需要初始化）
     initializeExamQuestionList();
@@ -3368,6 +3781,11 @@ function autoSubmitExam() {
         showExamResult();
         saveProgress();
 
+        // 新增：顯示再考一次按鈕，禁用提前交卷按鈕
+        examSubmitBtn.disabled = true;
+        examSubmitBtn.style.display = 'none';
+        examRetryBtn.style.display = 'inline-block';
+
         // 顯示時間到提示
         showAlert('考試時間已到，系統已自動交卷。', '時間到');
     } catch (error) {
@@ -3375,6 +3793,7 @@ function autoSubmitExam() {
         showAlert('自動交卷時發生錯誤，請重新整理頁面', '錯誤');
     }
 }
+
 
 // 手動提交模擬考
 function submitExam() {
@@ -3419,16 +3838,25 @@ function performExamSubmission() {
         }
         calculateExamScore();
 
+        // 更新學習記錄
+        updateLearningHistory();
+
         // 重新顯示題目列表以便查看結果和跳轉
         questionListElement.style.display = 'block';
 
         // 更新所有題目狀態
         debouncedUpdateQuestionStatus();
 
-        // 顯示考試結果（這裡會調用 showOnlyWrongQuestions）
+        // 顯示考試結果
         updateWrongQuestionsHistory();
         showExamResult();
         saveProgress();
+
+        // 新增：顯示再考一次按鈕，禁用提前交卷按鈕
+        examSubmitBtn.disabled = true;
+        examSubmitBtn.style.display = 'none';
+        examRetryBtn.style.display = 'inline-block';
+
     } catch (error) {
         console.error('交卷時發生錯誤:', error);
         alert('交卷時發生錯誤，請重新整理頁面後重試');
@@ -3616,6 +4044,11 @@ function resetToPracticeMode() {
 
     // 重置類別標題和顯示
     resetCategoryTitles();
+
+    // 新增：重置模擬考按鈕狀態
+    examSubmitBtn.disabled = false;
+    examSubmitBtn.style.display = 'none';
+    examRetryBtn.style.display = 'none';
 
     initializeQuestionList();
     safeDisplayQuestion();
@@ -3987,6 +4420,9 @@ function submitAnswer() {
             });
         }
     });
+
+    // 更新學習記錄
+    updateLearningHistory();
 
     // 顯示結果
     updateWrongQuestionsHistory();
