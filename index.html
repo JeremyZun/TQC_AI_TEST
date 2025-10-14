@@ -351,5 +351,78 @@
         </div>
     </div>
     <script src="script_rd.js"></script>
+    <script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 🧭 模式切換
+    document.getElementById("practice-mode").addEventListener("click", function() {
+        gtag('event', 'switch_mode', {
+            mode: 'practice',
+            label: '練習模式'
+        });
+    });
+
+    document.getElementById("exam-mode").addEventListener("click", function() {
+        gtag('event', 'switch_mode', {
+            mode: 'exam',
+            label: '模擬考模式'
+        });
+    });
+
+    // 🎯 自定義測驗
+    document.getElementById("custom-quiz-btn").addEventListener("click", function() {
+        gtag('event', 'open_custom_quiz', {
+            label: '開啟自定義測驗'
+        });
+    });
+
+    document.getElementById("start-custom-quiz").addEventListener("click", function() {
+        gtag('event', 'start_custom_quiz', {
+            label: '開始自定義測驗'
+        });
+    });
+
+    // 📊 學習分析報告
+    document.getElementById("analysis-btn").addEventListener("click", function() {
+        gtag('event', 'open_learning_analysis', {
+            label: '開啟學習分析報告'
+        });
+    });
+
+    // 📚 錯題本
+    document.getElementById("wrong-questions-btn").addEventListener("click", function() {
+        gtag('event', 'open_wrong_questions', {
+            label: '開啟智慧錯題本'
+        });
+    });
+
+    // 📖 題庫瀏覽
+    document.getElementById("question-bank-btn").addEventListener("click", function() {
+        gtag('event', 'open_question_bank', {
+            label: '開啟題庫瀏覽'
+        });
+    });
+
+    // ✅ 測驗完成（假設 script_rd.js 會在結束時觸發這個按鈕）
+    const examSubmit = document.getElementById("exam-submit-btn");
+    if (examSubmit) {
+        examSubmit.addEventListener("click", function() {
+            gtag('event', 'submit_exam', {
+                label: '完成模擬考'
+            });
+        });
+    }
+
+    // ✅ 練習提交（練習模式的提交）
+    const submitBtn = document.getElementById("submit-btn");
+    if (submitBtn) {
+        submitBtn.addEventListener("click", function() {
+            gtag('event', 'submit_practice', {
+                label: '提交練習題'
+            });
+        });
+    }
+});
+</script>
+
 </body>
 </html>
