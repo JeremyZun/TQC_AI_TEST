@@ -351,76 +351,135 @@
         </div>
     </div>
     <script src="script_rd.js"></script>
-    <script>
+    <!-- 🔹 GA4 自訂事件追蹤整合最終版 -->
+<script>
 document.addEventListener("DOMContentLoaded", function() {
+
     // 🧭 模式切換
-    document.getElementById("practice-mode").addEventListener("click", function() {
-        gtag('event', 'switch_mode', {
-            mode: 'practice',
-            label: '練習模式'
-        });
-    });
+    const practiceMode = document.getElementById("practice-mode");
+    const examMode = document.getElementById("exam-mode");
 
-    document.getElementById("exam-mode").addEventListener("click", function() {
-        gtag('event', 'switch_mode', {
-            mode: 'exam',
-            label: '模擬考模式'
-        });
-    });
-
-    // 🎯 自定義測驗
-    document.getElementById("custom-quiz-btn").addEventListener("click", function() {
-        gtag('event', 'open_custom_quiz', {
-            label: '開啟自定義測驗'
-        });
-    });
-
-    document.getElementById("start-custom-quiz").addEventListener("click", function() {
-        gtag('event', 'start_custom_quiz', {
-            label: '開始自定義測驗'
-        });
-    });
-
-    // 📊 學習分析報告
-    document.getElementById("analysis-btn").addEventListener("click", function() {
-        gtag('event', 'open_learning_analysis', {
-            label: '開啟學習分析報告'
-        });
-    });
-
-    // 📚 錯題本
-    document.getElementById("wrong-questions-btn").addEventListener("click", function() {
-        gtag('event', 'open_wrong_questions', {
-            label: '開啟智慧錯題本'
-        });
-    });
-
-    // 📖 題庫瀏覽
-    document.getElementById("question-bank-btn").addEventListener("click", function() {
-        gtag('event', 'open_question_bank', {
-            label: '開啟題庫瀏覽'
-        });
-    });
-
-    // ✅ 測驗完成（假設 script_rd.js 會在結束時觸發這個按鈕）
-    const examSubmit = document.getElementById("exam-submit-btn");
-    if (examSubmit) {
-        examSubmit.addEventListener("click", function() {
-            gtag('event', 'submit_exam', {
-                label: '完成模擬考'
+    if (practiceMode) {
+        practiceMode.addEventListener("click", function() {
+            gtag('event', 'switch_mode', {
+                mode: 'practice',
+                label: '切換至練習模式'
             });
         });
     }
 
-    // ✅ 練習提交（練習模式的提交）
+    if (examMode) {
+        examMode.addEventListener("click", function() {
+            gtag('event', 'switch_mode', {
+                mode: 'exam',
+                label: '切換至模擬考模式'
+            });
+        });
+    }
+
+    // 🎯 自定義測驗
+    const customQuizBtn = document.getElementById("custom-quiz-btn");
+    const startCustomQuiz = document.getElementById("start-custom-quiz");
+
+    if (customQuizBtn) {
+        customQuizBtn.addEventListener("click", function() {
+            gtag('event', 'open_custom_quiz', {
+                label: '開啟自定義測驗視窗'
+            });
+        });
+    }
+
+    if (startCustomQuiz) {
+        startCustomQuiz.addEventListener("click", function() {
+            const title = document.getElementById("quiz-title")?.value || "未命名測驗";
+            const quantity = document.getElementById("quiz-quantity")?.value || 0;
+            const time = document.getElementById("quiz-time")?.value || 0;
+
+            gtag('event', 'start_custom_quiz', {
+                label: '開始自定義測驗',
+                quiz_title: title,
+                question_count: parseInt(quantity),
+                time_limit_min: parseInt(time)
+            });
+        });
+    }
+
+    // 📊 學習分析報告
+    const analysisBtn = document.getElementById("analysis-btn");
+    if (analysisBtn) {
+        analysisBtn.addEventListener("click", function() {
+            gtag('event', 'open_learning_analysis', {
+                label: '開啟學習分析報告'
+            });
+        });
+    }
+
+    // 📚 智慧錯題本
+    const wrongQuestionsBtn = document.getElementById("wrong-questions-btn");
+    if (wrongQuestionsBtn) {
+        wrongQuestionsBtn.addEventListener("click", function() {
+            gtag('event', 'open_wrong_questions', {
+                label: '開啟智慧錯題本'
+            });
+        });
+    }
+
+    // 📖 題庫瀏覽
+    const questionBankBtn = document.getElementById("question-bank-btn");
+    if (questionBankBtn) {
+        questionBankBtn.addEventListener("click", function() {
+            gtag('event', 'open_question_bank', {
+                label: '開啟題庫瀏覽'
+            });
+        });
+    }
+
+    // 🎯 弱點訓練模式
+    const weaknessBtn = document.getElementById("weakness-training-btn");
+    if (weaknessBtn) {
+        weaknessBtn.addEventListener("click", function() {
+            gtag('event', 'start_weakness_training', {
+                label: '開始弱點訓練'
+            });
+        });
+    }
+
+    // ✅ 練習模式提交答案
     const submitBtn = document.getElementById("submit-btn");
     if (submitBtn) {
         submitBtn.addEventListener("click", function() {
+            const score = document.getElementById("score")?.innerText || "0";
+            const progress = document.getElementById("progress")?.innerText || "0/0";
+            
             gtag('event', 'submit_practice', {
-                label: '提交練習題'
+                label: '提交練習題',
+                mode: 'practice',
+                score: parseFloat(score),
+                progress: progress
             });
         });
     }
+
+    // ✅ 模擬考提交（包含分數與作答時間）
+    const examSubmit = document.getElementById("exam-submit-btn");
+    if (examSubmit) {
+        examSubmit.addEventListener("click", function() {
+            const score = document.getElementById("score")?.innerText || "0";
+            const timeDisplay = document.getElementById("time-display")?.innerText || "0:00";
+
+            // 將「分鐘:秒」轉成總秒數
+            const [min, sec] = timeDisplay.split(":").map(Number);
+            const timeSpentSec = (min * 60) + sec;
+
+            gtag('event', 'submit_exam', {
+                label: '提交模擬考',
+                mode: 'exam',
+                score: parseFloat(score),
+                time_spent_sec: timeSpentSec
+            });
+        });
+    }
+
 });
 </script>
 
