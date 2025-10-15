@@ -26,17 +26,52 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // 檢查權限狀態
+    // 檢查權限狀態的智能函數
     function checkNotificationPermission() {
-        if (Notification.permission === 'default') {
-            // 首次訪問，顯示通知請求面板
-            setTimeout(() => {
-                notificationPanel.style.display = 'block';
-            }, 5000); // 5秒後顯示
-        } else if (Notification.permission === 'granted') {
+        const permission = Notification.permission;
+        const notificationSkipped = localStorage.getItem('notificationSkipped');
+        const lastAskTime = localStorage.getItem('lastNotificationAsk');
+        const now = new Date().getTime();
+        
+        console.log('通知權限狀態:', permission);
+        console.log('用戶是否跳過:', notificationSkipped);
+        
+        // 如果用戶已經拒絕或跳過，就不顯示
+        if (permission === 'denied' || notificationSkipped === 'true') {
+            console.log('用戶已拒絕或跳過通知');
+            return;
+        }
+        
+        // 如果已經授予權限，就不顯示請求面板
+        if (permission === 'granted') {
             console.log('通知權限已授予');
             scheduleNotifications();
+            return;
         }
+        
+        // 檢查上次詢問時間，如果1天內問過就不重複詢問
+        if (lastAskTime && (now - lastAskTime) < 1 * 24 * 60 * 60 * 1000) {
+            console.log('1天內已詢問過通知權限');
+            return;
+        }
+        
+        // 顯示通知請求面板
+        showNotificationRequest();
+    }
+
+    // 顯示通知請求面板
+    function showNotificationRequest() {
+        setTimeout(() => {
+            notificationPanel.style.display = 'block';
+            // 記錄本次詢問時間
+            localStorage.setItem('lastNotificationAsk', new Date().getTime());
+            
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'notification_request_shown', {
+                    label: '顯示通知權限請求'
+                });
+            }
+        }, 3000); // 3秒後顯示
     }
 
     // 啟用通知
@@ -47,6 +82,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 showWelcomeNotification();
                 scheduleNotifications();
                 
+                // 清除跳過記錄，因為用戶現在同意了
+                localStorage.removeItem('notificationSkipped');
+                
                 // GA4 事件追蹤
                 if (typeof gtag !== 'undefined') {
                     gtag('event', 'notification_enabled', {
@@ -55,6 +93,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 console.log('通知功能已啟用');
+            } else if (permission === 'denied') {
+                // 用戶拒絕權限
+                notificationPanel.style.display = 'none';
+                localStorage.setItem('notificationSkipped', 'true');
+                
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'notification_denied', {
+                        label: '用戶拒絕通知權限'
+                    });
+                }
+                
+                console.log('用戶拒絕通知權限');
             }
         });
     });
@@ -63,6 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
     skipBtn.addEventListener('click', function() {
         notificationPanel.style.display = 'none';
         localStorage.setItem('notificationSkipped', 'true');
+        localStorage.setItem('lastNotificationAsk', new Date().getTime());
         
         if (typeof gtag !== 'undefined') {
             gtag('event', 'notification_skipped', {
@@ -76,16 +127,27 @@ document.addEventListener('DOMContentLoaded', function() {
     // 顯示歡迎通知
     function showWelcomeNotification() {
         if (Notification.permission === 'granted') {
-            const notification = new Notification('TQC AI 測驗系統', {
-                body: '🔔 測驗提醒已啟用！我們會定期提醒您進行練習。',
-                icon: '/TQC_AI_TEST/icon.png',
-                badge: '/TQC_AI_TEST/badge.png'
-            });
-            
-            // 3秒後自動關閉通知
-            setTimeout(() => {
-                notification.close();
-            }, 3000);
+            try {
+                const notification = new Notification('TQC AI 測驗系統', {
+                    body: '🔔 測驗提醒已啟用！我們會定期提醒您進行練習。',
+                    icon: '/TQC_AI_TEST/icon.png',
+                    tag: 'welcome'
+                });
+                
+                // 點擊通知時打開網站
+                notification.onclick = function() {
+                    window.focus();
+                    notification.close();
+                };
+                
+                // 5秒後自動關閉通知
+                setTimeout(() => {
+                    notification.close();
+                }, 5000);
+                
+            } catch (error) {
+                console.log('發送歡迎通知失敗:', error);
+            }
         }
     }
 
@@ -95,13 +157,39 @@ document.addEventListener('DOMContentLoaded', function() {
         // 這裡先建立基礎結構，詳細邏輯後續補充
     }
 
-    // 檢查是否已經跳過通知
-    if (!localStorage.getItem('notificationSkipped')) {
-        checkNotificationPermission();
+    // 檢查用戶的通知設置狀態
+    function checkUserNotificationSettings() {
+        const permission = Notification.permission;
+        
+        // 如果用戶已經明確拒絕，就不做任何事
+        if (permission === 'denied') {
+            console.log('用戶已明確拒絕通知權限');
+            return;
+        }
+        
+        // 檢查本地存儲的用戶選擇
+        const notificationSkipped = localStorage.getItem('notificationSkipped');
+        
+        if (permission === 'default' && !notificationSkipped) {
+            // 首次訪問或從未詢問過，進行智能詢問
+            checkNotificationPermission();
+        } else if (permission === 'granted') {
+            // 已經有權限，設置定期通知
+            scheduleNotifications();
+        }
     }
 
-    // 記錄用戶訪問時間
-    localStorage.setItem('lastVisit', new Date().getTime());
+    // 初始化通知系統
+    function initNotificationSystem() {
+        // 記錄本次訪問時間
+        localStorage.setItem('lastVisit', new Date().getTime());
+        
+        // 檢查並設置通知
+        checkUserNotificationSettings();
+    }
+
+    // 啟動通知系統
+    initNotificationSystem();
 });
     </script>
     <meta charset="UTF-8">
@@ -114,6 +202,9 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="notification-panel" id="notification-panel" style="display: none;">
         <div class="notification-request">
             <p>🔔 開啟測驗提醒通知，定期接收學習提醒！</p>
+            <p style="font-size: 12px; color: #666; margin: 5px 0 12px 0;">
+                （選擇「稍後再說」將在1天內不再顯示此提示）
+            </p>
             <div class="notification-buttons">
                 <button class="btn-primary" id="enable-notifications">啟用通知</button>
                 <button class="btn-secondary" id="skip-notifications">稍後再說</button>
