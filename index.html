@@ -13,21 +13,114 @@
     <script async custom-element="amp-auto-ads"
         src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js">
     </script>
+    <script>
+        // 🔔 新增：通知功能
+document.addEventListener('DOMContentLoaded', function() {
+    const notificationPanel = document.getElementById('notification-panel');
+    const enableBtn = document.getElementById('enable-notifications');
+    const skipBtn = document.getElementById('skip-notifications');
+
+    // 檢查瀏覽器支援
+    if (!('Notification' in window)) {
+        console.log('此瀏覽器不支持通知功能');
+        return;
+    }
+
+    // 檢查權限狀態
+    function checkNotificationPermission() {
+        if (Notification.permission === 'default') {
+            // 首次訪問，顯示通知請求面板
+            setTimeout(() => {
+                notificationPanel.style.display = 'block';
+            }, 5000); // 5秒後顯示
+        } else if (Notification.permission === 'granted') {
+            console.log('通知權限已授予');
+            scheduleNotifications();
+        }
+    }
+
+    // 啟用通知
+    enableBtn.addEventListener('click', function() {
+        Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+                notificationPanel.style.display = 'none';
+                showWelcomeNotification();
+                scheduleNotifications();
+                
+                // GA4 事件追蹤
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'notification_enabled', {
+                        label: '用戶啟用通知功能'
+                    });
+                }
+                
+                console.log('通知功能已啟用');
+            }
+        });
+    });
+
+    // 跳過通知
+    skipBtn.addEventListener('click', function() {
+        notificationPanel.style.display = 'none';
+        localStorage.setItem('notificationSkipped', 'true');
+        
+        if (typeof gtag !== 'undefined') {
+            gtag('event', 'notification_skipped', {
+                label: '用戶跳過通知啟用'
+            });
+        }
+        
+        console.log('用戶跳過通知啟用');
+    });
+
+    // 顯示歡迎通知
+    function showWelcomeNotification() {
+        if (Notification.permission === 'granted') {
+            const notification = new Notification('TQC AI 測驗系統', {
+                body: '🔔 測驗提醒已啟用！我們會定期提醒您進行練習。',
+                icon: '/TQC_AI_TEST/icon.png',
+                badge: '/TQC_AI_TEST/badge.png'
+            });
+            
+            // 3秒後自動關閉通知
+            setTimeout(() => {
+                notification.close();
+            }, 3000);
+        }
+    }
+
+    // 安排定期通知
+    function scheduleNotifications() {
+        console.log('開始安排定期通知...');
+        // 這裡先建立基礎結構，詳細邏輯後續補充
+    }
+
+    // 檢查是否已經跳過通知
+    if (!localStorage.getItem('notificationSkipped')) {
+        checkNotificationPermission();
+    }
+
+    // 記錄用戶訪問時間
+    localStorage.setItem('lastVisit', new Date().getTime());
+});
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TQC人工智慧應用與技術測驗</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
-    <script>
-    window.OneSignalDeferred = window.OneSignalDeferred || [];
-    OneSignalDeferred.push(async function(OneSignal) {
-        await OneSignal.init({
-        appId: "c79a886f-7f88-45c5-ba5c-1d8ddb97b4fe",
-        });
-    });
-    </script>
 </head>
 <body class="mode-not-selected">
+    <!-- 通知權限請求和推播功能 -->
+    <div class="notification-panel" id="notification-panel" style="display: none;">
+        <div class="notification-request">
+            <p>🔔 開啟測驗提醒通知，定期接收學習提醒！</p>
+            <div class="notification-buttons">
+                <button class="btn-primary" id="enable-notifications">啟用通知</button>
+                <button class="btn-secondary" id="skip-notifications">稍後再說</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 自定義提示框 -->
     <div class="custom-alert" id="custom-alert">
         <div class="alert-content">
