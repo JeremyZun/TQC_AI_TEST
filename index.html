@@ -13,9 +13,11 @@
     <script async custom-element="amp-auto-ads"
         src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js">
     </script>
+    <link rel="manifest" href="/TQC_AI_TEST/manifest.json">
+    <meta name="theme-color" content="#4CAF50">
     <script>
         // 🔔 新增：通知功能
-        document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
     const notificationPanel = document.getElementById('notification-panel');
     const enableBtn = document.getElementById('enable-notifications');
     const skipBtn = document.getElementById('skip-notifications');
@@ -238,21 +240,106 @@
         }
     }
 
-    // 初始化通知系統
-    function initNotificationSystem() {
-        // 記錄本次訪問時間
-        localStorage.setItem('lastVisit', new Date().getTime());
-        
-        // 檢查並設置通知
-        if (shouldShowNotificationRequest()) {
-            showNotificationRequest();
-        } else if (Notification.permission === 'granted') {
-            // 已經有權限，設置定期通知
-            scheduleNotifications();
-        }
-        
-        console.log('通知系統初始化完成');
+// 在 initNotificationSystem 函數中添加：
+function initNotificationSystem() {
+    // 記錄本次訪問時間
+    localStorage.setItem('lastVisit', new Date().getTime());
+    
+    // 註冊 Service Worker
+    registerServiceWorker();
+    
+    // 檢查並設置通知
+    if (shouldShowNotificationRequest()) {
+        showNotificationRequest();
+    } else if (Notification.permission === 'granted') {
+        // 已經有權限，設置定期通知
+        scheduleNotifications();
     }
+    
+    console.log('通知系統初始化完成');
+}
+
+// 註冊 Service Worker
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/TQC_AI_TEST/sw.js')
+            .then(registration => {
+                console.log('Service Worker 註冊成功:', registration);
+                
+                // 檢查推播訂閱狀態
+                checkPushSubscription(registration);
+            })
+            .catch(error => {
+                console.log('Service Worker 註冊失敗:', error);
+            });
+    } else {
+        console.log('此瀏覽器不支持 Service Worker');
+    }
+}
+
+// 檢查推播訂閱狀態
+function checkPushSubscription(registration) {
+    registration.pushManager.getSubscription()
+        .then(subscription => {
+            if (subscription) {
+                console.log('用戶已訂閱推播通知:', subscription);
+                // 可以在這裡發送訂閱信息到服務器
+                sendSubscriptionToServer(subscription);
+            } else {
+                console.log('用戶未訂閱推播通知');
+                // 可以在適當的時候訂閱推播
+                // subscribeToPush(registration);
+            }
+        })
+        .catch(error => {
+            console.log('檢查推播訂閱失敗:', error);
+        });
+}
+
+// 訂閱推播通知（可選功能）
+function subscribeToPush(registration) {
+    const publicVapidKey = '你的公鑰'; // 需要設置 VAPID 密鑰
+    
+    registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+    })
+    .then(subscription => {
+        console.log('推播訂閱成功:', subscription);
+        sendSubscriptionToServer(subscription);
+    })
+    .catch(error => {
+        console.log('推播訂閱失敗:', error);
+    });
+}
+
+// 發送訂閱信息到服務器（可選）
+function sendSubscriptionToServer(subscription) {
+    // 這裡可以發送到你的後端服務器
+    console.log('發送訂閱信息到服務器:', subscription);
+    
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'push_subscribed', {
+            label: '用戶訂閱推播通知'
+        });
+    }
+}
+
+// VAPID 密鑰轉換工具函數
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
 
     // 啟動通知系統
     initNotificationSystem();
