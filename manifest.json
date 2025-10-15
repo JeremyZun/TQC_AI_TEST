@@ -8,12 +8,5 @@
     "theme_color": "#4CAF50",
     "orientation": "portrait",
     "scope": "/TQC_AI_TEST/",
-    "icons": [
-        {
-            "src": "/TQC_AI_TEST/icon.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        }
-    ],
     "categories": ["education", "productivity"]
 }
