@@ -14,8 +14,8 @@
         src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js">
     </script>
     <script>
-    // 🔔 新增：通知功能
-    document.addEventListener('DOMContentLoaded', function() {
+        // 🔔 新增：通知功能
+        document.addEventListener('DOMContentLoaded', function() {
     const notificationPanel = document.getElementById('notification-panel');
     const enableBtn = document.getElementById('enable-notifications');
     const skipBtn = document.getElementById('skip-notifications');
@@ -242,9 +242,6 @@
     function initNotificationSystem() {
         // 記錄本次訪問時間
         localStorage.setItem('lastVisit', new Date().getTime());
-        
-        // 註冊 Service Worker
-        registerServiceWorker();
         
         // 檢查並設置通知
         if (shouldShowNotificationRequest()) {
