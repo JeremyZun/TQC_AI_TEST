@@ -1,16 +1,11 @@
 // Service Worker for TQC AI Test - 推播通知
 const CACHE_NAME = 'tqc-ai-test-v1.2';
-
-// VAPID 公鑰 (需要與前端保持一致)
-const VAPID_PUBLIC_KEY = 'BElWQk-y1J3N9J8wWbXvL2YVcT7rH1aKpM6nD4sF7gR2tC5xZ8qA0oE3wL9jUyI_pGdNfBmQeS4hVlO0';
-
 const urlsToCache = [
   '/TQC_AI_TEST/',
   '/TQC_AI_TEST/index.html',
   '/TQC_AI_TEST/style.css',
   '/TQC_AI_TEST/script_rd.js',
-  '/TQC_AI_TEST/icon.png',
-  '/TQC_AI_TEST/sw.js'
+  '/TQC_AI_TEST/icon.png'
 ];
 
 // 安裝 Service Worker
