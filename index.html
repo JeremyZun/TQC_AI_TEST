@@ -15,7 +15,7 @@
     </script>
     <script>
         // 🔔 新增：通知功能
-document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function() {
     const notificationPanel = document.getElementById('notification-panel');
     const enableBtn = document.getElementById('enable-notifications');
     const skipBtn = document.getElementById('skip-notifications');
@@ -26,37 +26,49 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
-    // 檢查權限狀態的智能函數
-    function checkNotificationPermission() {
+    // 智能判斷是否應該顯示通知請求
+    function shouldShowNotificationRequest() {
         const permission = Notification.permission;
         const notificationSkipped = localStorage.getItem('notificationSkipped');
         const lastAskTime = localStorage.getItem('lastNotificationAsk');
         const now = new Date().getTime();
+        const oneDay = 24 * 60 * 60 * 1000;
         
         console.log('通知權限狀態:', permission);
         console.log('用戶是否跳過:', notificationSkipped);
+        console.log('上次詢問時間:', lastAskTime);
         
-        // 如果用戶已經拒絕或跳過，就不顯示
-        if (permission === 'denied' || notificationSkipped === 'true') {
-            console.log('用戶已拒絕或跳過通知');
-            return;
-        }
-        
-        // 如果已經授予權限，就不顯示請求面板
+        // 如果用戶已經授予權限，不顯示
         if (permission === 'granted') {
-            console.log('通知權限已授予');
-            scheduleNotifications();
-            return;
+            console.log('用戶已授予權限，不顯示請求');
+            return false;
         }
         
-        // 檢查上次詢問時間，如果1天內問過就不重複詢問
-        if (lastAskTime && (now - lastAskTime) < 1 * 24 * 60 * 60 * 1000) {
-            console.log('1天內已詢問過通知權限');
-            return;
+        // 如果用戶明確拒絕，不顯示
+        if (permission === 'denied') {
+            console.log('用戶已拒絕權限，不顯示請求');
+            return false;
         }
         
-        // 顯示通知請求面板
-        showNotificationRequest();
+        // 如果用戶跳過且1天內，不顯示
+        if (notificationSkipped === 'true') {
+            if (!lastAskTime) {
+                // 有跳過記錄但沒有時間記錄，顯示請求
+                console.log('有跳過記錄但無時間記錄，顯示請求');
+                return true;
+            }
+            if ((now - parseInt(lastAskTime)) < oneDay) {
+                console.log('1天內已跳過，不顯示請求');
+                return false;
+            } else {
+                console.log('跳過已超過1天，重新顯示請求');
+                return true;
+            }
+        }
+        
+        // 其他情況都顯示（從未詢問過）
+        console.log('從未詢問過通知權限，顯示請求');
+        return true;
     }
 
     // 顯示通知請求面板
@@ -71,6 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     label: '顯示通知權限請求'
                 });
             }
+            console.log('通知請求面板已顯示');
         }, 3000); // 3秒後顯示
     }
 
@@ -97,6 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // 用戶拒絕權限
                 notificationPanel.style.display = 'none';
                 localStorage.setItem('notificationSkipped', 'true');
+                localStorage.setItem('lastNotificationAsk', new Date().getTime());
                 
                 if (typeof gtag !== 'undefined') {
                     gtag('event', 'notification_denied', {
@@ -105,6 +119,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 console.log('用戶拒絕通知權限');
+            } else {
+                // 用戶關閉彈窗或其他情況
+                console.log('用戶未做出選擇');
             }
         });
     });
@@ -121,7 +138,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        console.log('用戶跳過通知啟用');
+        console.log('用戶跳過通知啟用，1天內不再顯示');
     });
 
     // 顯示歡迎通知
@@ -154,28 +171,70 @@ document.addEventListener('DOMContentLoaded', function() {
     // 安排定期通知
     function scheduleNotifications() {
         console.log('開始安排定期通知...');
-        // 這裡先建立基礎結構，詳細邏輯後續補充
-    }
-
-    // 檢查用戶的通知設置狀態
-    function checkUserNotificationSettings() {
-        const permission = Notification.permission;
         
-        // 如果用戶已經明確拒絕，就不做任何事
-        if (permission === 'denied') {
-            console.log('用戶已明確拒絕通知權限');
-            return;
+        // 檢查是否需要發送學習提醒
+        function checkForReminders() {
+            if (Notification.permission !== 'granted') return;
+            
+            const lastNotification = localStorage.getItem('lastStudyReminder');
+            const now = new Date().getTime();
+            const oneDay = 24 * 60 * 60 * 1000;
+            
+            // 如果超過1天沒有發送提醒，且用戶長時間未訪問
+            if (!lastNotification || (now - lastNotification) > oneDay) {
+                const lastVisit = localStorage.getItem('lastVisit');
+                const daysSinceVisit = lastVisit ? (now - lastVisit) / oneDay : 7;
+                
+                // 如果超過2天沒訪問，發送提醒
+                if (daysSinceVisit > 2) {
+                    sendStudyReminder();
+                }
+            }
         }
         
-        // 檢查本地存儲的用戶選擇
-        const notificationSkipped = localStorage.getItem('notificationSkipped');
-        
-        if (permission === 'default' && !notificationSkipped) {
-            // 首次訪問或從未詢問過，進行智能詢問
-            checkNotificationPermission();
-        } else if (permission === 'granted') {
-            // 已經有權限，設置定期通知
-            scheduleNotifications();
+        // 每小時檢查一次
+        setInterval(checkForReminders, 60 * 60 * 1000);
+        checkForReminders(); // 立即檢查一次
+    }
+
+    // 發送學習提醒
+    function sendStudyReminder() {
+        if (Notification.permission === 'granted') {
+            const reminders = [
+                '📚 該回來練習 TQC AI 測驗囉！保持學習節奏很重要！',
+                '🎯 距離證照考試更近了，今天練習了嗎？',
+                '💪 每天進步一點點！來做幾題 AI 測驗吧！',
+                '🚀 技能提升時間到！開啟今天的學習之旅！',
+                '🏆 持續練習是成功的關鍵，現在就開始測驗！'
+            ];
+            
+            const randomReminder = reminders[Math.floor(Math.random() * reminders.length)];
+            
+            try {
+                const notification = new Notification('TQC AI 學習提醒', {
+                    body: randomReminder,
+                    icon: '/TQC_AI_TEST/icon.png',
+                    tag: 'study-reminder'
+                });
+                
+                notification.onclick = function() {
+                    window.focus();
+                    notification.close();
+                };
+                
+                localStorage.setItem('lastStudyReminder', new Date().getTime());
+                
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'study_reminder_sent', {
+                        label: '學習提醒通知發送'
+                    });
+                }
+                
+                console.log('學習提醒已發送:', randomReminder);
+                
+            } catch (error) {
+                console.log('發送學習提醒失敗:', error);
+            }
         }
     }
 
@@ -185,7 +244,14 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('lastVisit', new Date().getTime());
         
         // 檢查並設置通知
-        checkUserNotificationSettings();
+        if (shouldShowNotificationRequest()) {
+            showNotificationRequest();
+        } else if (Notification.permission === 'granted') {
+            // 已經有權限，設置定期通知
+            scheduleNotifications();
+        }
+        
+        console.log('通知系統初始化完成');
     }
 
     // 啟動通知系統
