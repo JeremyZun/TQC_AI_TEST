@@ -4,10 +4,8 @@ const urlsToCache = [
   '/TQC_AI_TEST/',
   '/TQC_AI_TEST/index.html',
   '/TQC_AI_TEST/style.css',
-  '/TQC_AI_TEST/script_rd.js',
-  '/TQC_AI_TEST/icon.png',
-  '/TQC_AI_TEST/icon-192.png',
-  '/TQC_AI_TEST/icon-512.png'
+  '/TQC_AI_TEST/script_rd.js'
+  // 移除所有 icon 引用
 ];
 
 // Firebase 配置
@@ -31,6 +29,10 @@ self.addEventListener('install', event => {
       })
       .then(() => {
         console.log('所有文件已緩存，立即激活');
+        return self.skipWaiting();
+      })
+      .catch(error => {
+        console.log('緩存失敗，但繼續安裝:', error);
         return self.skipWaiting();
       })
   );
@@ -78,9 +80,7 @@ self.addEventListener('push', event => {
     data = {
       title: 'TQC AI 學習提醒',
       body: '🔔 該回來練習 TQC AI 測驗了！保持學習節奏很重要！',
-      icon: '/TQC_AI_TEST/icon.png',
-      image: '/TQC_AI_TEST/icon-512.png',
-      badge: '/TQC_AI_TEST/icon-192.png',
+      // 移除 icon 相關設定
       tag: 'study-reminder',
       timestamp: new Date().toISOString(),
       data: {
@@ -92,9 +92,7 @@ self.addEventListener('push', event => {
 
   const options = {
     body: data.body || '🔔 該回來練習 TQC AI 測驗了！',
-    icon: data.icon || '/TQC_AI_TEST/icon.png',
-    badge: data.badge || '/TQC_AI_TEST/icon-192.png',
-    image: data.image || '/TQC_AI_TEST/icon-512.png',
+    // 移除 icon、badge、image 設定
     tag: data.tag || 'study-reminder',
     requireInteraction: true,
     vibrate: [200, 100, 200],
@@ -116,22 +114,6 @@ self.addEventListener('push', event => {
 
   event.waitUntil(
     self.registration.showNotification(data.title || 'TQC AI 學習提醒', options)
-      .then(() => {
-        console.log('推播通知顯示成功');
-        
-        // 發送分析事件
-        self.clients.matchAll().then(clients => {
-          clients.forEach(client => {
-            client.postMessage({
-              type: 'NOTIFICATION_DISPLAYED',
-              data: data
-            });
-          });
-        });
-      })
-      .catch(error => {
-        console.log('顯示通知失敗:', error);
-      })
   );
 });
 

@@ -14,7 +14,6 @@
         src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js">
     </script>
     <link rel="manifest" href="/TQC_AI_TEST/manifest.json">
-    <meta name="theme-color" content="#4CAF50">
     <script>
         // 防止未定義錯誤的全局防護
         (function() {
@@ -220,7 +219,7 @@
                             notification: {
                                 title: title,
                                 body: body,
-                                icon: '/TQC_AI_TEST/icon.png',
+                                // 移除 icon 設定
                                 data: data
                             },
                             timestamp: new Date().toISOString()
@@ -241,7 +240,7 @@
                     if (Notification.permission === 'granted') {
                         new Notification(title, {
                             body: body,
-                            icon: '/TQC_AI_TEST/icon.png',
+                            // 移除 icon 設定
                             data: data
                         });
                         return true;
@@ -272,7 +271,7 @@
                 if (Notification.permission === 'granted') {
                     const notification = new Notification('🎉 推播通知已啟用！', {
                         body: '現在即使關閉網頁也能收到學習提醒了！',
-                        icon: '/TQC_AI_TEST/icon.png',
+                        // 移除 icon 設定
                         tag: 'push-enabled'
                     });
                     
@@ -518,7 +517,7 @@
             try {
                 const notification = new Notification(`TQC AI ${timeOfDay}提醒`, {
                     body: randomReminder,
-                    icon: '/TQC_AI_TEST/icon.png',
+                    // 移除 icon 設定
                     tag: `daily-reminder-${timeOfDay}`,
                     requireInteraction: true
                 });
@@ -550,7 +549,7 @@
                 try {
                     const notification = new Notification('TQC AI 測驗系統', {
                         body: '🔔 測驗提醒已啟用！我們會定期提醒您進行練習。',
-                        icon: '/TQC_AI_TEST/icon.png',
+                        // 移除 icon 設定
                         tag: 'welcome'
                     });
                     
