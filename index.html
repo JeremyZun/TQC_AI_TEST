@@ -28,6 +28,169 @@
         return;
     }
 
+    // 推播通知訂閱管理
+    class PushNotificationManager {
+        constructor() {
+            this.publicVapidKey = 'BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkrxZJjSgSnfckjBJuBkr3qBUYIHBQFLXYp5Nksh8U';
+        }
+
+        // 初始化推播訂閱
+        async initPushSubscription(registration) {
+            try {
+                // 檢查是否已經訂閱
+                let subscription = await registration.pushManager.getSubscription();
+                
+                if (subscription) {
+                    console.log('✅ 用戶已訂閱推播通知');
+                    this.sendSubscriptionToServer(subscription, 'existing');
+                    return subscription;
+                }
+
+                // 如果用戶允許通知但未訂閱，詢問是否訂閱
+                if (Notification.permission === 'granted') {
+                    console.log('用戶允許通知但未訂閱推播，嘗試訂閱...');
+                    subscription = await this.subscribeToPush(registration);
+                    return subscription;
+                }
+                
+            } catch (error) {
+                console.log('初始化推播訂閱失敗:', error);
+            }
+            return null;
+        }
+
+        // 訂閱推播通知
+        async subscribeToPush(registration) {
+            try {
+                console.log('開始訂閱推播通知...');
+                
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: this.urlBase64ToUint8Array(this.publicVapidKey)
+                });
+
+                console.log('✅ 推播訂閱成功:', subscription);
+                
+                // 發送訂閱信息到服務器
+                await this.sendSubscriptionToServer(subscription, 'new');
+                
+                // 顯示訂閱成功通知
+                this.showSubscriptionSuccess();
+                
+                return subscription;
+
+            } catch (error) {
+                console.log('❌ 推播訂閱失敗:', error);
+                
+                if (error.name === 'NotAllowedError') {
+                    console.log('用戶拒絕推播訂閱');
+                }
+                
+                return null;
+            }
+        }
+
+        // 發送訂閱信息到服務器
+        async sendSubscriptionToServer(subscription, type) {
+            try {
+                // 這裡可以發送到你的後端服務器
+                // 對於 GitHub Pages，我們只能使用前端模擬
+                console.log(`發送${type}訂閱到服務器:`, subscription);
+                
+                // 儲存訂閱信息到 localStorage
+                localStorage.setItem('pushSubscription', JSON.stringify(subscription));
+                localStorage.setItem('pushSubscriptionDate', new Date().toISOString());
+                
+                // GA4 事件追蹤
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'push_subscription', {
+                        event_category: 'notification',
+                        event_label: type === 'new' ? '新訂閱' : '現有訂閱',
+                        subscription_id: subscription.endpoint
+                    });
+                }
+                
+            } catch (error) {
+                console.log('發送訂閱信息失敗:', error);
+            }
+        }
+
+        // 取消訂閱
+        async unsubscribeFromPush(registration) {
+            try {
+                const subscription = await registration.pushManager.getSubscription();
+                if (subscription) {
+                    await subscription.unsubscribe();
+                    console.log('✅ 推播訂閱已取消');
+                    
+                    // 清除本地存儲
+                    localStorage.removeItem('pushSubscription');
+                    localStorage.removeItem('pushSubscriptionDate');
+                    
+                    if (typeof gtag !== 'undefined') {
+                        gtag('event', 'push_unsubscription', {
+                            event_category: 'notification'
+                        });
+                    }
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.log('取消訂閱失敗:', error);
+            }
+            return false;
+        }
+
+        // 顯示訂閱成功通知
+        showSubscriptionSuccess() {
+            if (Notification.permission === 'granted') {
+                const notification = new Notification('🎉 推播通知已啟用！', {
+                    body: '現在即使關閉網頁也能收到學習提醒了！',
+                    icon: '/TQC_AI_TEST/icon.png',
+                    tag: 'push-enabled'
+                });
+                
+                notification.onclick = () => {
+                    window.focus();
+                    notification.close();
+                };
+                
+                setTimeout(() => notification.close(), 5000);
+            }
+        }
+
+        // VAPID 公鑰轉換
+        urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding)
+                .replace(/\-/g, '+')
+                .replace(/_/g, '/');
+
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+
+            for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+            }
+            return outputArray;
+        }
+
+        // 檢查訂閱狀態
+        async checkSubscriptionStatus(registration) {
+            const subscription = await registration.pushManager.getSubscription();
+            const storedSubscription = localStorage.getItem('pushSubscription');
+            
+            return {
+                subscribed: !!subscription,
+                subscription: subscription,
+                storedSubscription: storedSubscription ? JSON.parse(storedSubscription) : null
+            };
+        }
+    }
+
+    // 初始化推播管理器
+    const pushManager = new PushNotificationManager();
+
     // 智能判斷是否應該顯示通知請求
     function shouldShowNotificationRequest() {
         const permission = Notification.permission;
@@ -170,36 +333,139 @@
         }
     }
 
-    // 安排定期通知
+    // 安排定期通知 - 優化版本
     function scheduleNotifications() {
-        console.log('開始安排定期通知...');
+        console.log('開始安排智能定期通知...');
         
-        // 檢查是否需要發送學習提醒
-        function checkForReminders() {
-            if (Notification.permission !== 'granted') return;
-            
-            const lastNotification = localStorage.getItem('lastStudyReminder');
-            const now = new Date().getTime();
-            const oneDay = 24 * 60 * 60 * 1000;
-            
-            // 如果超過1天沒有發送提醒，且用戶長時間未訪問
-            if (!lastNotification || (now - lastNotification) > oneDay) {
-                const lastVisit = localStorage.getItem('lastVisit');
-                const daysSinceVisit = lastVisit ? (now - lastVisit) / oneDay : 7;
-                
-                // 如果超過2天沒訪問，發送提醒
-                if (daysSinceVisit > 2) {
-                    sendStudyReminder();
-                }
-            }
-        }
+        // 立即檢查一次
+        checkForReminders();
         
-        // 每小時檢查一次
-        setInterval(checkForReminders, 60 * 60 * 1000);
-        checkForReminders(); // 立即檢查一次
+        // 每30分鐘檢查一次（測試用可以改短一些）
+        setInterval(checkForReminders, 30 * 60 * 1000);
+        
+        // 每天固定時間檢查（早上9點和晚上8點）
+        scheduleDailyReminders();
     }
 
-    // 發送學習提醒
+    // 智能學習提醒檢查
+    function checkForReminders() {
+        if (Notification.permission !== 'granted') {
+            console.log('通知權限未授予，跳過提醒檢查');
+            return;
+        }
+        
+        const now = new Date();
+        const lastNotification = localStorage.getItem('lastStudyReminder');
+        const lastVisit = localStorage.getItem('lastVisit');
+        const nowTime = now.getTime();
+        
+        console.log('檢查學習提醒...', {
+            現在時間: now.toLocaleString(),
+            最後通知: lastNotification ? new Date(parseInt(lastNotification)).toLocaleString() : '從未',
+            最後訪問: lastVisit ? new Date(parseInt(lastVisit)).toLocaleString() : '從未'
+        });
+        
+        // 計算時間間隔
+        const hoursSinceLastNotification = lastNotification ? 
+            (nowTime - parseInt(lastNotification)) / (60 * 60 * 1000) : 24;
+        const hoursSinceLastVisit = lastVisit ? 
+            (nowTime - parseInt(lastVisit)) / (60 * 60 * 1000) : 24;
+        
+        console.log(`距離上次通知: ${hoursSinceLastNotification.toFixed(1)} 小時`);
+        console.log(`距離上次訪問: ${hoursSinceLastVisit.toFixed(1)} 小時`);
+        
+        // 智能提醒條件
+        const shouldRemind = 
+            hoursSinceLastVisit > 12 &&      // 超過12小時沒訪問
+            hoursSinceLastNotification > 6;  // 超過6小時沒發通知
+        
+        if (shouldRemind) {
+            console.log('符合發送提醒條件，發送學習提醒');
+            sendStudyReminder();
+        } else {
+            console.log('不符合發送提醒條件');
+        }
+    }
+
+    // 安排每日固定時間提醒
+    function scheduleDailyReminders() {
+        function scheduleDailyTime(hour, minute) {
+            const now = new Date();
+            const targetTime = new Date();
+            targetTime.setHours(hour, minute, 0, 0);
+            
+            // 如果今天時間已過，安排明天
+            if (targetTime <= now) {
+                targetTime.setDate(targetTime.getDate() + 1);
+            }
+            
+            const delay = targetTime.getTime() - now.getTime();
+            
+            setTimeout(() => {
+                if (Notification.permission === 'granted') {
+                    sendDailyReminder(hour);
+                }
+                // 安排下一次
+                scheduleDailyTime(hour, minute);
+            }, delay);
+            
+            console.log(`已安排 ${hour}:${minute.toString().padStart(2, '0')} 的每日提醒`);
+        }
+        
+        // 安排早上9點和晚上8點的提醒
+        scheduleDailyTime(9, 0);   // 早上9點
+        scheduleDailyTime(20, 0);  // 晚上8點
+    }
+
+    // 發送每日固定時間提醒
+    function sendDailyReminder(hour) {
+        const timeOfDay = hour < 12 ? '早上' : '晚上';
+        const reminders = {
+            morning: [
+                '🌞 早安！今天也別忘了練習 TQC AI 測驗哦！',
+                '📚 一日之計在於晨，開始今天的學習吧！',
+                '💡 早上頭腦最清晰，最適合學習新知識！'
+            ],
+            evening: [
+                '🌙 晚安前記得練習一下 TQC AI 測驗！',
+                '📖 晚上複習是鞏固記憶的好時機！',
+                '🎯 睡前學習，大腦會在睡眠中繼續處理資訊！'
+            ]
+        };
+        
+        const reminderList = hour < 12 ? reminders.morning : reminders.evening;
+        const randomReminder = reminderList[Math.floor(Math.random() * reminderList.length)];
+        
+        try {
+            const notification = new Notification(`TQC AI ${timeOfDay}提醒`, {
+                body: randomReminder,
+                icon: '/TQC_AI_TEST/icon.png',
+                tag: `daily-reminder-${timeOfDay}`,
+                requireInteraction: true
+            });
+            
+            notification.onclick = function() {
+                window.focus();
+                notification.close();
+            };
+            
+            localStorage.setItem('lastStudyReminder', new Date().getTime());
+            
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'daily_reminder_sent', {
+                    label: `每日${timeOfDay}提醒`,
+                    time_of_day: timeOfDay
+                });
+            }
+            
+            console.log(`${timeOfDay}提醒已發送:`, randomReminder);
+            
+        } catch (error) {
+            console.log(`發送${timeOfDay}提醒失敗:`, error);
+        }
+    }
+
+    // 發送學習提醒（修改現有函數）
     function sendStudyReminder() {
         if (Notification.permission === 'granted') {
             const reminders = [
@@ -207,7 +473,10 @@
                 '🎯 距離證照考試更近了，今天練習了嗎？',
                 '💪 每天進步一點點！來做幾題 AI 測驗吧！',
                 '🚀 技能提升時間到！開啟今天的學習之旅！',
-                '🏆 持續練習是成功的關鍵，現在就開始測驗！'
+                '🏆 持續練習是成功的關鍵，現在就開始測驗！',
+                '🌟 學習如逆水行舟，不進則退！快來練習吧！',
+                '🎓 每一次練習都讓你離證照更近一步！',
+                '💡 人工智慧領域發展快速，持續學習很重要！'
             ];
             
             const randomReminder = reminders[Math.floor(Math.random() * reminders.length)];
@@ -216,7 +485,8 @@
                 const notification = new Notification('TQC AI 學習提醒', {
                     body: randomReminder,
                     icon: '/TQC_AI_TEST/icon.png',
-                    tag: 'study-reminder'
+                    tag: 'study-reminder',
+                    requireInteraction: true
                 });
                 
                 notification.onclick = function() {
@@ -228,7 +498,7 @@
                 
                 if (typeof gtag !== 'undefined') {
                     gtag('event', 'study_reminder_sent', {
-                        label: '學習提醒通知發送'
+                        label: '智能學習提醒'
                     });
                 }
                 
@@ -240,109 +510,165 @@
         }
     }
 
-// 在 initNotificationSystem 函數中添加：
-function initNotificationSystem() {
-    // 記錄本次訪問時間
-    localStorage.setItem('lastVisit', new Date().getTime());
-    
     // 註冊 Service Worker
-    registerServiceWorker();
-    
-    // 檢查並設置通知
-    if (shouldShowNotificationRequest()) {
-        showNotificationRequest();
-    } else if (Notification.permission === 'granted') {
-        // 已經有權限，設置定期通知
-        scheduleNotifications();
+    function registerServiceWorker() {
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            navigator.serviceWorker.register('/TQC_AI_TEST/sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker 註冊成功:', registration);
+                    
+                    // 初始化推播訂閱
+                    return pushManager.initPushSubscription(registration);
+                })
+                .then(subscription => {
+                    if (subscription) {
+                        console.log('🎯 推播通知系統就緒');
+                    } else {
+                        console.log('ℹ️ 推播通知未訂閱，但基礎通知可用');
+                    }
+                })
+                .catch(error => {
+                    console.log('❌ Service Worker 註冊失敗:', error);
+                });
+        } else {
+            console.log('ℹ️ 瀏覽器不支持 Service Worker 或推播通知');
+        }
     }
-    
-    console.log('通知系統初始化完成');
-}
 
-// 註冊 Service Worker
-function registerServiceWorker() {
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/TQC_AI_TEST/sw.js')
-            .then(registration => {
-                console.log('Service Worker 註冊成功:', registration);
-                
-                // 檢查推播訂閱狀態
-                checkPushSubscription(registration);
-            })
-            .catch(error => {
-                console.log('Service Worker 註冊失敗:', error);
-            });
-    } else {
-        console.log('此瀏覽器不支持 Service Worker');
+    // 初始化通知系統
+    function initNotificationSystem() {
+        // 記錄本次訪問時間
+        localStorage.setItem('lastVisit', new Date().getTime());
+        
+        // 註冊 Service Worker
+        registerServiceWorker();
+        
+        // 檢查並設置通知
+        if (shouldShowNotificationRequest()) {
+            showNotificationRequest();
+        } else if (Notification.permission === 'granted') {
+            // 已經有權限，設置定期通知
+            scheduleNotifications();
+        }
+        
+        console.log('通知系統初始化完成');
     }
-}
-
-// 檢查推播訂閱狀態
-function checkPushSubscription(registration) {
-    registration.pushManager.getSubscription()
-        .then(subscription => {
-            if (subscription) {
-                console.log('用戶已訂閱推播通知:', subscription);
-                // 可以在這裡發送訂閱信息到服務器
-                sendSubscriptionToServer(subscription);
-            } else {
-                console.log('用戶未訂閱推播通知');
-                // 可以在適當的時候訂閱推播
-                // subscribeToPush(registration);
-            }
-        })
-        .catch(error => {
-            console.log('檢查推播訂閱失敗:', error);
-        });
-}
-
-// 訂閱推播通知（可選功能）
-function subscribeToPush(registration) {
-    const publicVapidKey = '你的公鑰'; // 需要設置 VAPID 密鑰
-    
-    registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-    })
-    .then(subscription => {
-        console.log('推播訂閱成功:', subscription);
-        sendSubscriptionToServer(subscription);
-    })
-    .catch(error => {
-        console.log('推播訂閱失敗:', error);
-    });
-}
-
-// 發送訂閱信息到服務器（可選）
-function sendSubscriptionToServer(subscription) {
-    // 這裡可以發送到你的後端服務器
-    console.log('發送訂閱信息到服務器:', subscription);
-    
-    if (typeof gtag !== 'undefined') {
-        gtag('event', 'push_subscribed', {
-            label: '用戶訂閱推播通知'
-        });
-    }
-}
-
-// VAPID 密鑰轉換工具函數
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-        .replace(/\-/g, '+')
-        .replace(/_/g, '/');
-
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-}
 
     // 啟動通知系統
     initNotificationSystem();
+
+    // 添加測試功能到 window 對象
+    window.pushTest = {
+        // 檢查推播狀態
+        async checkStatus() {
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.getRegistration('/TQC_AI_TEST/');
+                if (registration) {
+                    const status = await pushManager.checkSubscriptionStatus(registration);
+                    console.log('🔔 推播訂閱狀態:', status);
+                    return status;
+                }
+            }
+            return null;
+        },
+        
+        // 手動訂閱推播
+        async subscribe() {
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.getRegistration('/TQC_AI_TEST/');
+                if (registration) {
+                    await pushManager.subscribeToPush(registration);
+                }
+            }
+        },
+        
+        // 取消訂閱
+        async unsubscribe() {
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.getRegistration('/TQC_AI_TEST/');
+                if (registration) {
+                    await pushManager.unsubscribeFromPush(registration);
+                }
+            }
+        },
+        
+        // 發送測試推播（模擬）
+        async sendTestPush() {
+            if ('serviceWorker' in navigator) {
+                const registration = await navigator.serviceWorker.getRegistration('/TQC_AI_TEST/');
+                if (registration && registration.active) {
+                    registration.active.postMessage({
+                        type: 'TEST_PUSH',
+                        title: '測試推播通知',
+                        body: '這是一個測試推播消息！',
+                        timestamp: new Date().toISOString()
+                    });
+                    console.log('✅ 測試推播消息已發送到 Service Worker');
+                }
+            }
+        }
+    };
+
+    // 測試通知功能
+    window.testNotification = function() {
+        if (Notification.permission === 'granted') {
+            new Notification('測試通知', {
+                body: '這是一個測試通知！',
+                icon: '/TQC_AI_TEST/icon.png',
+                tag: 'test'
+            });
+            console.log('✅ 測試通知已發送');
+        } else {
+            console.log('❌ 通知權限未授予');
+        }
+    };
+
+    // 強制發送學習提醒
+    window.forceReminder = function() {
+        sendStudyReminder();
+    };
+
+    // 重置所有通知設置
+    window.resetNotificationSettings = function() {
+        localStorage.removeItem('notificationSkipped');
+        localStorage.removeItem('lastNotificationAsk');
+        localStorage.removeItem('lastStudyReminder');
+        localStorage.removeItem('lastVisit');
+        localStorage.removeItem('pushSubscription');
+        localStorage.removeItem('pushSubscriptionDate');
+        console.log('✅ 所有通知設置已重置');
+        location.reload();
+    };
+
+    // 查看通知狀態
+    window.checkNotificationStatus = async function() {
+        console.log('=== 完整通知系統狀態 ===');
+        console.log('📱 基礎通知權限:', Notification.permission);
+        console.log('⚙️ Service Worker 支持:', 'serviceWorker' in navigator);
+        console.log('🔔 推播通知支持:', 'PushManager' in window);
+        console.log('💾 跳過通知:', localStorage.getItem('notificationSkipped'));
+        
+        const lastAsk = localStorage.getItem('lastNotificationAsk');
+        console.log('⏰ 上次詢問:', lastAsk ? new Date(parseInt(lastAsk)).toLocaleString() : '從未');
+        
+        const lastReminder = localStorage.getItem('lastStudyReminder');
+        console.log('🔔 上次提醒:', lastReminder ? new Date(parseInt(lastReminder)).toLocaleString() : '從未');
+        
+        const lastVisit = localStorage.getItem('lastVisit');
+        console.log('🌐 最後訪問:', lastVisit ? new Date(parseInt(lastVisit)).toLocaleString() : '從未');
+        
+        // 檢查推播狀態
+        if ('serviceWorker' in navigator) {
+            const registration = await navigator.serviceWorker.getRegistration('/TQC_AI_TEST/');
+            if (registration) {
+                const pushStatus = await pushManager.checkSubscriptionStatus(registration);
+                console.log('📡 推播訂閱:', pushStatus.subscribed ? '✅ 已訂閱' : '❌ 未訂閱');
+                if (pushStatus.subscribed) {
+                    console.log('  端點:', pushStatus.subscription.endpoint);
+                }
+            }
+        }
+    };
 });
     </script>
     <meta charset="UTF-8">
