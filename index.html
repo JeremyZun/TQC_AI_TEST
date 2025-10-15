@@ -17,6 +17,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TQC人工智慧應用與技術測驗</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+        appId: "c79a886f-7f88-45c5-ba5c-1d8ddb97b4fe",
+        });
+    });
+    </script>
 </head>
 <body class="mode-not-selected">
     <!-- 自定義提示框 -->
