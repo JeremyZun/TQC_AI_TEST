@@ -15,7 +15,7 @@
     </script>
     <script>
         // 🔔 新增：通知功能
-        document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
     const notificationPanel = document.getElementById('notification-panel');
     const enableBtn = document.getElementById('enable-notifications');
     const skipBtn = document.getElementById('skip-notifications');
@@ -238,10 +238,148 @@
         }
     }
 
+// VAPID 公鑰 (必須與 sw.js 中的一致)
+const VAPID_PUBLIC_KEY = 'BElWQk-y1J3N9J8wWbXvL2YVcT7rH1aKpM6nD4sF7gR2tC5xZ8qA0oE3wL9jUyI_pGdNfBmQeS4hVlO0';
+
+// 在現有的通知功能代碼中，找到 registerServiceWorker 函數，替換為：
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+        navigator.serviceWorker.register('/TQC_AI_TEST/sw.js')
+            .then(registration => {
+                console.log('Service Worker 註冊成功:', registration);
+                
+                // 檢查推播訂閱狀態
+                checkPushSubscription(registration);
+            })
+            .catch(error => {
+                console.log('Service Worker 註冊失敗:', error);
+            });
+    } else {
+        console.log('此瀏覽器不支持 Service Worker 或 Push Manager');
+    }
+}
+
+// 檢查和創建推播訂閱
+function checkPushSubscription(registration) {
+    registration.pushManager.getSubscription()
+        .then(subscription => {
+            if (subscription) {
+                console.log('用戶已訂閱推播:', subscription);
+                // 可以將訂閱信息發送到伺服器
+                sendSubscriptionToServer(subscription);
+                return subscription;
+            } else {
+                console.log('用戶未訂閱推播，開始訂閱流程');
+                return subscribeToPush(registration);
+            }
+        })
+        .catch(error => {
+            console.log('檢查推播訂閱時出錯:', error);
+        });
+}
+
+// 訂閱推播通知
+function subscribeToPush(registration) {
+    return registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    })
+    .then(subscription => {
+        console.log('用戶已訂閱推播通知:', subscription);
+        // 將訂閱信息發送到伺服器
+        sendSubscriptionToServer(subscription);
+        return subscription;
+    })
+    .catch(error => {
+        console.log('訂閱推播失敗:', error);
+        if (Notification.permission === 'denied') {
+            console.log('用戶已拒絕通知權限');
+        }
+    });
+}
+
+// 將訂閱信息發送到伺服器（模擬）
+function sendSubscriptionToServer(subscription) {
+    // 這裡應該將 subscription 發送到你的後端伺服器
+    // 由於 GitHub Pages 是靜態網站，我們先模擬這個過程
+    console.log('訂閱信息（應該發送到伺服器）:', JSON.stringify(subscription));
+    
+    // 儲存在 localStorage 中作為演示
+    localStorage.setItem('pushSubscription', JSON.stringify(subscription));
+    
+    // GA4 事件追蹤
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'push_subscribed', {
+            label: '用戶訂閱推播通知'
+        });
+    }
+}
+
+// 工具函數：轉換 VAPID 金鑰
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// 取消訂閱推播
+function unsubscribeFromPush() {
+    navigator.serviceWorker.ready
+        .then(registration => {
+            return registration.pushManager.getSubscription();
+        })
+        .then(subscription => {
+            if (subscription) {
+                return subscription.unsubscribe();
+            }
+        })
+        .then(successful => {
+            console.log('取消訂閱推播:', successful);
+            localStorage.removeItem('pushSubscription');
+        })
+        .catch(error => {
+            console.log('取消訂閱失敗:', error);
+        });
+}
+// 測試推播通知功能
+function testPushNotification() {
+    if (Notification.permission === 'granted') {
+        // 發送測試通知
+        const notification = new Notification('TQC AI 測試通知', {
+            body: '🎉 推播通知功能正常工作！',
+            icon: '/TQC_AI_TEST/icon.png',
+            tag: 'test'
+        });
+        
+        notification.onclick = function() {
+            window.focus();
+            notification.close();
+        };
+        
+        // 3秒後自動關閉
+        setTimeout(() => {
+            notification.close();
+        }, 3000);
+    } else {
+        alert('請先啟用通知權限');
+    }
+}
     // 初始化通知系統
     function initNotificationSystem() {
         // 記錄本次訪問時間
         localStorage.setItem('lastVisit', new Date().getTime());
+        
+        // 註冊 Service Worker
+        registerServiceWorker();
         
         // 檢查並設置通知
         if (shouldShowNotificationRequest()) {
@@ -277,7 +415,12 @@
             </div>
         </div>
     </div>
-
+<!-- 在通知面板後面添加測試按鈕 -->
+<div style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+    <button onclick="testPushNotification()" style="padding: 10px; background: #ff9800; color: white; border: none; border-radius: 5px; cursor: pointer;">
+        🔔 測試推播
+    </button>
+</div>
     <!-- 自定義提示框 -->
     <div class="custom-alert" id="custom-alert">
         <div class="alert-content">
