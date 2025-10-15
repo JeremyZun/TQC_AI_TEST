@@ -556,7 +556,64 @@
 
     // 啟動通知系統
     initNotificationSystem();
+    // 將測試函數暴露到全局作用域
+    window.checkNotificationStatus = async function() {
+        console.log('=== 完整通知系統狀態 ===');
+        console.log('📱 基礎通知權限:', Notification.permission);
+        console.log('⚙️ Service Worker 支持:', 'serviceWorker' in navigator);
+        console.log('🔔 推播通知支持:', 'PushManager' in window);
+        console.log('💾 跳過通知:', localStorage.getItem('notificationSkipped'));
+        
+        const lastAsk = localStorage.getItem('lastNotificationAsk');
+        console.log('⏰ 上次詢問:', lastAsk ? new Date(parseInt(lastAsk)).toLocaleString() : '從未');
+        
+        const lastReminder = localStorage.getItem('lastStudyReminder');
+        console.log('🔔 上次提醒:', lastReminder ? new Date(parseInt(lastReminder)).toLocaleString() : '從未');
+        
+        const lastVisit = localStorage.getItem('lastVisit');
+        console.log('🌐 最後訪問:', lastVisit ? new Date(parseInt(lastVisit)).toLocaleString() : '從未');
+        
+        // 檢查推播狀態
+        if ('serviceWorker' in navigator) {
+            const registration = await navigator.serviceWorker.getRegistration('/TQC_AI_TEST/');
+            if (registration) {
+                const pushStatus = await pushManager.checkSubscriptionStatus(registration);
+                console.log('📡 推播訂閱:', pushStatus.subscribed ? '✅ 已訂閱' : '❌ 未訂閱');
+                if (pushStatus.subscribed) {
+                    console.log('  端點:', pushStatus.subscription.endpoint);
+                }
+            }
+        }
+    };
 
+    // 暴露其他測試函數
+    window.testNotification = function() {
+        if (Notification.permission === 'granted') {
+            new Notification('測試通知', {
+                body: '這是一個測試通知！',
+                icon: '/TQC_AI_TEST/icon.png',
+                tag: 'test'
+            });
+            console.log('✅ 測試通知已發送');
+        } else {
+            console.log('❌ 通知權限未授予');
+        }
+    };
+
+    window.forceReminder = function() {
+        sendStudyReminder();
+    };
+
+    window.resetNotificationSettings = function() {
+        localStorage.removeItem('notificationSkipped');
+        localStorage.removeItem('lastNotificationAsk');
+        localStorage.removeItem('lastStudyReminder');
+        localStorage.removeItem('lastVisit');
+        localStorage.removeItem('pushSubscription');
+        localStorage.removeItem('pushSubscriptionDate');
+        console.log('✅ 所有通知設置已重置');
+        location.reload();
+    };
     // 添加測試功能到 window 對象
     window.pushTest = {
         // 檢查推播狀態
