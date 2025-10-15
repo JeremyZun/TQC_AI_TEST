@@ -59,11 +59,29 @@ self.addEventListener('activate', event => {
 });
 
 // 攔截請求
+// 攔截請求 - 增強版本
 self.addEventListener('fetch', event => {
+  // 跳過對 webhook.site 的請求
+  if (event.request.url.includes('webhook.site')) {
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        return response || fetch(event.request);
+        // 如果緩存中有，返回緩存內容
+        if (response) {
+          return response;
+        }
+        
+        // 否則從網路獲取
+        return fetch(event.request).catch(error => {
+          console.log('網路請求失敗:', error);
+          // 對於 HTML 請求，返回離線頁面
+          if (event.request.headers.get('accept').includes('text/html')) {
+            return caches.match('/TQC_AI_TEST/index.html');
+          }
+        });
       })
   );
 });
